@@ -58,7 +58,7 @@ class result:
     def gaussian_phi(self, x, mean_std):
         mean = mean_std[0]
         std = mean_std[1]
-        difference = np.min([abs(x - mean), abs(x - 2 * np.pi - mean)])
+        difference = np.min([abs(x - mean), abs(x - 2 * np.pi - mean), abs(x + 2 * np.pi - mean)])
         normal_distr = 1 / np.sqrt(2 * np.pi * std ** 2) * np.exp(- np.square(difference) / (2 * std ** 2))
         return normal_distr
 

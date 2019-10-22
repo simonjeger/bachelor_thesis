@@ -52,15 +52,30 @@ class sensor_target:
 
 class sensor_motion:
 
-    def __init__(self, path, size_world):
+    def __init__(self, path, size_world, step_distance):
         self.path = path
         self.size_world = size_world
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
         self.std_v = 0.5
-        self.std_move = 5
+        self.std_move = self.std_prob(0.95) * step_distance
 
+    def std_prob(self,certainty):
+        # This function determines what the factor to the step_distance should be, so that it contains a certan certainty
+        x = np.linspace(-1000, 999, 1000)
+        std = [0]
+        mean = 500
+        distance_min_max = [0]
+
+        for i in range(1, 800):
+            std = std + [i]
+            cdf = self.cdf(x, [mean, std[-1]])
+
+            distance_min_max = distance_min_max + [x[self.find_nearest(cdf, certainty)] - x[self.find_nearest(cdf, 1 - certainty)]]
+
+        factor = (distance_min_max[200] - distance_min_max[0]) / (std[200] - std[0])
+        return factor
 
     def sense(self, angle_step_distance):
         # My measurement will be a bit off the true x and y position

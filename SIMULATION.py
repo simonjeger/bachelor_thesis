@@ -110,7 +110,7 @@ class simulation:
                 self.my_robot[x].update_estimate_robot()
 
                 # Update belief about neighbours position
-                self.my_robot[x].my_belief_position.update_neighbour(angle_step_distance[x])
+                self.my_robot[x].my_belief_position.update_neighbour()
 
                 # Update estimated position of neighbours based on belief_position
                 self.my_robot[x].update_estimate_neighbour()

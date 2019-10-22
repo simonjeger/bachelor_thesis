@@ -26,7 +26,7 @@ class lauv:
         self.communication_range_observation = 1 / 5 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 30
 
         self.my_sensor_target = SENSOR.sensor_target(self.path, self.size_world, self.position_target)
-        self.my_sensor_motion = SENSOR.sensor_motion(self.path, self.size_world)
+        self.my_sensor_motion = SENSOR.sensor_motion(self.path, self.size_world, self.step_distance)
         self.my_sensor_distance = SENSOR.sensor_distance(self.path, self.size_world, self.id_robot, self.position_robot_exact)
 
         self.my_belief_target = BELIEF.belief_target(self.size_world, self.my_sensor_target, self.number_of_robots, self.id_robot)

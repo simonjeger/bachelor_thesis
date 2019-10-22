@@ -142,13 +142,13 @@ class belief_position:
 
 
     def update_robot(self, angle_step_distance):
-        measurement_angle_step_distance = self.my_sensor_motion.sense(angle_step_distance)
+        self.measurement_angle_step_distance = self.my_sensor_motion.sense(angle_step_distance)
 
         prior_x = self.belief_state[self.id_robot][0]
         prior_y = self.belief_state[self.id_robot][1]
 
-        likelihood_x = self.my_sensor_motion.likelihood_x(measurement_angle_step_distance)
-        likelihood_y = self.my_sensor_motion.likelihood_y(measurement_angle_step_distance)
+        likelihood_x = self.my_sensor_motion.likelihood_x(self.measurement_angle_step_distance)
+        likelihood_y = self.my_sensor_motion.likelihood_y(self.measurement_angle_step_distance)
 
         posterior_x = [prior_x[0] + likelihood_x[0], np.sqrt(prior_x[1] ** 2 + likelihood_x[1] ** 2)]
         posterior_y = [prior_y[0] + likelihood_y[0], np.sqrt(prior_y[1] ** 2 + likelihood_y[1] ** 2)]
@@ -156,12 +156,12 @@ class belief_position:
         self.belief_state[self.id_robot][0] = posterior_x
         self.belief_state[self.id_robot][1] = posterior_y
 
-    def update_neighbour(self, angle_step_distance):
+    def update_neighbour(self):
         for x in range(self.number_of_robots):
             if x != self.id_robot:
 
                 # Transform into coordinate system with new orgin
-                self.transform(angle_step_distance, x)
+                self.transform(x)
 
                 # Make uncertanty grow
                 prior_phi = self.belief_state[x][0]
@@ -190,11 +190,11 @@ class belief_position:
                 self.belief_state[x][0] = posterior_phi
                 self.belief_state[x][1] = posterior_r
 
-    def transform(self, angle_step_distance, id_robot):
+    def transform(self, id_robot):
         dx_before = self.belief_state[id_robot][1][0] * np.cos(self.belief_state[id_robot][0][0])
         dy_before = self.belief_state[id_robot][1][0] * np.sin(self.belief_state[id_robot][0][0])
-        dx_trans = angle_step_distance[1] * np.cos(angle_step_distance[0])
-        dy_trans = angle_step_distance[1] * np.sin(angle_step_distance[0])
+        dx_trans = self.measurement_angle_step_distance[1] * np.cos(self.measurement_angle_step_distance[0])
+        dy_trans = self.measurement_angle_step_distance[1] * np.sin(self.measurement_angle_step_distance[0])
 
         dx_now = dx_before - dx_trans
         dy_now = dy_before - dy_trans
