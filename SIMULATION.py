@@ -53,20 +53,19 @@ class simulation:
                 self.my_robot[x].position_robot_exact[y] = self.my_robot[y].position_robot_exact[y]
                 self.my_robot[x].position_robot_estimate[y] = self.my_robot[y].position_robot_estimate[y]
 
-        # Initialize beliefs
+        # Initialize belief_position
         for x in range(len(self.position_initial)):
-            self.my_robot[x].my_belief_target.initialize()
             for y in range(len(self.position_initial)):
-                self.my_robot[x].my_belief_position.initialize(y)
-                #self.my_robot[x].my_belief_position_cheap.initialize(y)
+                if x != y:
+                    self.my_robot[x].my_belief_position.initialize_neighbour(y, self.my_robot[y].my_belief_position.belief_state[y])
 
         # Initialize the common result
         self.my_result = RESULT.result(self.path, self.name_of_simulation, self.size_world, self.position_target, self.my_robot)
 
         # Save picture of sensor_model (from the first robot), they are all the same
         self.my_robot[0].my_sensor_target.picture_save()
-        self.my_robot[0].my_sensor_position.picture_save()
         self.my_robot[0].my_sensor_motion.picture_save()
+        self.my_robot[0].my_sensor_distance.picture_save()
 
         # Save picture of the initial belief_state
         self.my_result.picture_save()
@@ -106,7 +105,6 @@ class simulation:
             for x in range(len(self.my_robot)):
                 # Update belief about my position
                 self.my_robot[x].my_belief_position.update_robot(angle_step_distance[x])
-                #self.my_robot[x].my_belief_position_cheap.update(angle_step_distance[x])
 
                 # Update position estimate of myself
                 self.my_robot[x].update_estimate_robot()
@@ -127,15 +125,14 @@ class simulation:
                 for y in range(len(self.my_robot)):
 
                     # Do I think we are close enough, does my neighbour think that too & are we actually close enough?
-                    distance_estimate[x][y] = np.sqrt((self.my_robot[x].position_robot_estimate[x][0] - self.my_robot[x].position_robot_estimate[y][0]) ** 2 + (self.my_robot[x].position_robot_estimate[x][1] - self.my_robot[x].position_robot_estimate[y][1]) ** 2)
+                    distance_estimate[x][y] = self.my_robot[x].my_belief_position.belief_state[y][1][0]
                     distance_exact[x][y] = np.sqrt((self.my_robot[x].position_robot_exact[x][0] - self.my_robot[x].position_robot_exact[y][0]) ** 2 + (self.my_robot[x].position_robot_exact[x][1] - self.my_robot[x].position_robot_exact[y][1]) ** 2)
 
                     if (distance_estimate[x][y] < self.my_robot[x].communication_range_observation) & (distance_exact[x][y] < self.my_robot[x].communication_range_observation) & (x != y):
                         self.my_robot[x].id_contact[y] = 1
 
                         # Update the position estimate
-                        self.my_robot[y].my_belief_position.belief_state[x] = self.my_robot[x].my_belief_position.belief_state[x]
-                        #self.my_robot[y].my_belief_position_cheap.belief_state[x] = self.my_robot[x].my_belief_position_cheap.belief_state[x]
+                        self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
 
                         # Merge all the logs, if they contain more information than I already know
                         for z in range(len(self.my_robot)):
@@ -208,10 +205,10 @@ class simulation:
 
 
 # Initialize a simulation
-my_simulation = simulation('test',[35,35],[[0,0], [34,34]])
+my_simulation = simulation('test',[100,100],[[0,0], [99,0], [0,99], [99,99]])
 for i in range(10):
     # Everytime I set a new random position for the target
-    my_simulation.run([np.random.randint(35), np.random.randint(35)])
+    my_simulation.run([np.random.randint(79), np.random.randint(79)])
     # Get information of performance over the total of all my simulations
     my_simulation.performance_target_position()
     my_simulation.performance_time()

@@ -12,13 +12,9 @@ class belief_target:
 
         self.position_log_estimate = [[] for i in range(self.number_of_robots)]
         self.observation_log = [[] for i in range(self.number_of_robots)]
-        self.belief_state = []
+        self.belief_state = [[1 / (self.size_world[0] * self.size_world[1]) for i in range(self.size_world[0])] for j in range(self.size_world[1])]
 
         self.map_update = [0 for i in range(self.number_of_robots)]
-
-
-    def initialize(self):
-        self.belief_state = [[1 / (self.size_world[0] * self.size_world[1]) for i in range(self.size_world[0])] for j in range(self.size_world[1])]
 
 
     def update(self, position_next):
@@ -118,145 +114,92 @@ class belief_target:
         return test
 
 
-
 class belief_position:
 
-    def __init__(self, size_world, id_robot, position_robot_estimate, my_sensor_position, my_sensor_motion, number_of_robots, step_distance, number_of_directions):
-        self.size_world = size_world
+    def __init__(self, id_robot, position_robot_estimate, my_sensor_distance, my_sensor_motion, number_of_robots):
         self.id_robot = id_robot
-        self.my_sensor_position = my_sensor_position
+        self.my_sensor_distance = my_sensor_distance
         self.my_sensor_motion = my_sensor_motion
         self.position_robot_estimate = position_robot_estimate
         self.number_of_robots = number_of_robots
         self.belief_state = [0] * self.number_of_robots
 
-        self.step_distance = step_distance
-        self.number_of_directions = number_of_directions
+        # Parameters for belief_position_me
+        self.mean_x = self.position_robot_estimate[self.id_robot][0]
+        self.std_x = 2
+        self.mean_y = self.position_robot_estimate[self.id_robot][1]
+        self.std_y = 2
 
-        # distance & angle
-        self.distance = [[[[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])] for k in range(self.size_world[1])] for l in range(self.size_world[1])]
-        self.angle = [[[[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])] for k in range(self.size_world[1])] for l in range(self.size_world[1])]
-        for i_l in range(self.size_world[1]):
-            for i_k in range(self.size_world[0]):
-                for i_y in range(self.size_world[1]):
-                    for i_x in range(self.size_world[0]):
-                        self.distance[i_l][i_k][i_y][i_x] = np.sqrt((i_x - i_k) ** 2 + (i_y - i_l) ** 2)
+        self.belief_state[self.id_robot] = [[self.mean_x, self.std_x], [self.mean_y, self.std_y]]
 
-                        self.angle[i_l][i_k][i_y][i_x] = np.arctan2((i_y - i_l), (i_x - i_k))
+    def initialize_neighbour(self, id_robot, belief_state):
+        dx = belief_state[0][0] - self.position_robot_estimate[self.id_robot][0]
+        dy = belief_state[1][0] - self.position_robot_estimate[self.id_robot][1]
+        mean_phi = np.arctan2(dy, dx)
+        mean_r = np.sqrt(dx ** 2 + dy ** 2)
 
-
-    def initialize(self, id_robot):
-        # Distance to point of measurement
-        distance = [[[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])] for x in range(self.number_of_robots)]
-        result = [0] * self.number_of_robots
-        for i_y in range(self.size_world[1]):
-            for i_x in range(self.size_world[0]):
-                distance[id_robot][i_y][i_x] = np.sqrt((i_x - self.position_robot_estimate[id_robot][0]) ** 2 + (i_y - self.position_robot_estimate[id_robot][1]) ** 2)
-        self.belief_state[id_robot] = self.normal_distribution(distance[id_robot],0)
+        self.belief_state[id_robot] = [[mean_phi, belief_state[0][1] / mean_r], [mean_r, belief_state[1][1]]]
 
 
     def update_robot(self, angle_step_distance):
         measurement_angle_step_distance = self.my_sensor_motion.sense(angle_step_distance)
-        likelihood_prior = self.my_sensor_motion.likelihood_robot(self.belief_state[self.id_robot], self.distance, self.angle, measurement_angle_step_distance)
-        likelihood_prior = likelihood_prior / np.sum(likelihood_prior)
 
-        # Posterior (ignore normalization for now)
-        posterior = likelihood_prior
+        prior_x = self.belief_state[self.id_robot][0]
+        prior_y = self.belief_state[self.id_robot][1]
 
-        # Update belief
-        self.belief_state[self.id_robot] = posterior
+        likelihood_x = self.my_sensor_motion.likelihood_x(measurement_angle_step_distance)
+        likelihood_y = self.my_sensor_motion.likelihood_y(measurement_angle_step_distance)
 
-        # Now we'll normalize (target must be here somewhere...)
-        self.belief_state[self.id_robot] = self.belief_state[self.id_robot] / self.belief_state[self.id_robot].sum()
+        posterior_x = [prior_x[0] + likelihood_x[0], np.sqrt(prior_x[1] ** 2 + likelihood_x[1] ** 2)]
+        posterior_y = [prior_y[0] + likelihood_y[0], np.sqrt(prior_y[1] ** 2 + likelihood_y[1] ** 2)]
+
+        self.belief_state[self.id_robot][0] = posterior_x
+        self.belief_state[self.id_robot][1] = posterior_y
 
     def update_neighbour(self, angle_step_distance):
         for x in range(self.number_of_robots):
-
-            # Determine likelihood * prior
             if x != self.id_robot:
-                # Estimate robots position
-                #likelihood_prior = self.my_sensor_motion.likelihood_neighbour(self.belief_state[x], self.distance, self.angle, self.number_of_directions, angle_step_distance)
-                likelihood_prior = self.my_sensor_motion.likelihood_cheap(self.belief_state[x], self.distance, angle_step_distance)
-                likelihood_prior = likelihood_prior / np.sum(likelihood_prior)
 
-                # Sensormeasurement for distance measurement
-                measurement = self.my_sensor_position.sense(x)
+                # Transform into coordinate system with new orgin
+                self.transform(angle_step_distance, x)
 
-                # Measurement of distance to neighbour and updating the likelihood_prior
-                likelihood_prior = self.my_sensor_position.likelihood(self.distance[int(self.position_robot_estimate[self.id_robot][1])][int(self.position_robot_estimate[self.id_robot][0])], measurement) * likelihood_prior
-                likelihood_prior = likelihood_prior / np.sum(likelihood_prior)
+                # Make uncertanty grow
+                prior_phi = self.belief_state[x][0]
+                prior_r = self.belief_state[x][1]
 
-                # Posterior (ignore normalization for now)
-                posterior = likelihood_prior
+                velocity_vector_phi = [prior_phi[0], self.my_sensor_motion.std_move / self.belief_state[x][1][0]]
+                velocity_vector_r = [prior_r[0], self.my_sensor_motion.std_move]
 
-                # Update belief
-                self.belief_state[x] = posterior
+                new_prior_phi = [prior_phi[0], np.sqrt(prior_phi[1] ** 2 + velocity_vector_phi[1] ** 2)]
+                new_prior_r = [prior_r[0], np.sqrt(prior_r[1] ** 2 + velocity_vector_r[1] ** 2)]
 
-                # Now we'll normalize (target must be here somewhere...)
-                self.belief_state[x] = self.belief_state[x] / self.belief_state[x].sum()
+                # Make measurement update
+                measurement = self.my_sensor_distance.sense(x)
+                likelihood_r = self.my_sensor_distance.likelihood(measurement)
 
+                new_mean_r = (new_prior_r[0] * likelihood_r[1] ** 2 + likelihood_r[0] * new_prior_r[1] ** 2) / (new_prior_r[1] ** 2 + likelihood_r[1] ** 2)
+                new_std_r = np.sqrt((new_prior_r[1] ** 2 * likelihood_r[1] ** 2) / (new_prior_r[1] ** 2 + likelihood_r[1] ** 2))
 
-    def normal_distribution(self, distance, mean):
-        # This is only used for the initial position
-        std = 1
-        normal_distr =  1 / np.sqrt(2 * np.pi * std ** 2) * np.exp(- np.subtract(distance, mean) ** 2 / (2 * std ** 2))
-        # Robot has to be somewhere
-        return normal_distr / np.sum(normal_distr)
+                posterior_phi = new_prior_phi
+                posterior_r = [new_mean_r, new_std_r]
 
+                # Increase uncertanty because observation point is uncertain
+                posterior_phi[1] = np.sqrt(posterior_phi[1] ** 2 + (self.belief_state[self.id_robot][0][1] / posterior_r[0]) ** 2)
+                posterior_r[1] = np.sqrt(posterior_r[1] ** 2 + self.belief_state[self.id_robot][0][1] ** 2)
 
-class belief_position_cheap:
+                self.belief_state[x][0] = posterior_phi
+                self.belief_state[x][1] = posterior_r
 
-    def __init__(self, size_world, my_sensor_position, my_sensor_motion_cheap, number_of_robots, id_robot, position_robot_exact):
-        self.size_world = size_world
-        self.my_sensor_position = my_sensor_position
-        self.my_sensor_motion_cheap = my_sensor_motion_cheap
-        self.id_robot = id_robot
-        self.position_robot_exact = position_robot_exact
-        self.number_of_robots = number_of_robots
-        self.belief_state = [0] * self.number_of_robots
+    def transform(self, angle_step_distance, id_robot):
+        dx_before = self.belief_state[id_robot][1][0] * np.cos(self.belief_state[id_robot][0][0])
+        dy_before = self.belief_state[id_robot][1][0] * np.sin(self.belief_state[id_robot][0][0])
+        dx_trans = angle_step_distance[1] * np.cos(angle_step_distance[0])
+        dy_trans = angle_step_distance[1] * np.sin(angle_step_distance[0])
 
+        dx_now = dx_before - dx_trans
+        dy_now = dy_before - dy_trans
 
-    def initialize(self, id_robot):
-        # Distance to point of measurement
-        distance = [[[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])] for x in range(self.number_of_robots)]
-        result = [0] * self.number_of_robots
-        for i_y in range(self.size_world[1]):
-            for i_x in range(self.size_world[0]):
-                distance[id_robot][i_y][i_x] = np.sqrt((i_x - self.position_robot_exact[id_robot][0]) ** 2 + (i_y - self.position_robot_exact[id_robot][1]) ** 2)
-        self.belief_state[id_robot] = self.normal_distribution(distance[id_robot],0)
+        self.mean_phi = np.arctan2(dy_now, dx_now)
+        self.mean_r = np.sqrt(dx_now ** 2 + dy_now ** 2)
 
-
-    def normal_distribution(self, distance, mean):
-        # This is only used for the initial position
-        std = 1
-        normal_distr =  1 / np.sqrt(2 * np.pi * std ** 2) * np.exp(- np.subtract(distance, mean) ** 2 / (2 * std ** 2))
-        # Neighbour has to be somewhere
-        return normal_distr / np.sum(normal_distr)
-
-
-    def update(self, angle_step_distance):
-        position_robot = [self.position_robot_exact[self.id_robot][0] + angle_step_distance[1] * np.cos(angle_step_distance[0]), self.position_robot_exact[self.id_robot][1] + angle_step_distance[1] * np.sin(angle_step_distance[0])]
-        for x in range(self.number_of_robots):
-            # Prior is our current belief
-            prior = self.my_sensor_motion_cheap.predict_neighbour(self.belief_state[x])
-
-            # Distance to point of measurement
-            distance = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-            for i_y in range(self.size_world[1]):
-                for i_x in range(self.size_world[0]):
-                    distance[i_y][i_x] = np.sqrt((i_x - position_robot[0]) ** 2 + (i_y - position_robot[1]) ** 2)
-
-            # Sensormeasurement
-            measurement = self.my_sensor_position.sense(x)
-
-            # Determine likelihood
-            likelihood = self.my_sensor_position.likelihood(distance, measurement)
-
-            # Posterior (ignore normalization for now)
-            posterior = likelihood * prior
-
-            # Update belief
-            self.belief_state[x] = posterior
-
-            # Now we'll normalize (target must be here somewhere...)
-            self.belief_state[x] = self.belief_state[x] / self.belief_state[x].sum()
+        self.belief_state[id_robot] = [[self.mean_phi, self.belief_state[id_robot][0][1]],[self.mean_r, self.belief_state[id_robot][1][1]]]
