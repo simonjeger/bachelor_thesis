@@ -4,14 +4,11 @@ import copy
 
 class decision:
 
-    def __init__(self, size_world, my_belief_target, my_belief_position, id_robot, id_contact, position_robot_exact, position_robot_estimate, my_sensor_target, path_depth, number_of_directions, step_distance):
+    def __init__(self, size_world, my_belief_target, id_robot, position_robot_estimate, my_sensor_target, path_depth, number_of_directions, step_distance):
         self.size_world = size_world
         self.my_belief_target = my_belief_target
-        self.my_belief_position = my_belief_position #under construction
         self.position_robot_estimate = position_robot_estimate
         self.id_robot = id_robot
-        self.position_robot_exact = position_robot_exact
-        self.id_contact = id_contact
         self.my_sensor_target = my_sensor_target
 
         # Parameters that determine the motion of the robot
@@ -26,8 +23,8 @@ class decision:
         position_observe = []
         value = []
         for j in range(0, self.path_depth + 1):
-            position_observe = position_observe + [[[0, 0] for i in range(self.number_of_directions ** j)]]
-            value = value + [[0 for i in range(self.number_of_directions ** j)]]
+            position_observe = position_observe + [[[0, 0] for i in range((self.number_of_directions + 1) ** j)]]
+            value = value + [[0 for i in range((self.number_of_directions + 1) ** j)]]
 
         # Determine start point & start value of path tree
         position_observe[0][0][0] = copy.deepcopy(self.position_robot_estimate[self.id_robot][0])
@@ -37,9 +34,12 @@ class decision:
         # Fill in path tree
         for j in range(1, self.path_depth + 1):
             for i in range(self.number_of_directions ** j):
-                position_observe[j][i][0] = position_observe[j-1][int(i / self.number_of_directions)][0] + self.step_distance * np.cos(int(i % self.number_of_directions) * self.step_angle)
-                position_observe[j][i][1] = position_observe[j-1][int(i / self.number_of_directions)][1] + self.step_distance * np.sin(int(i % self.number_of_directions) * self.step_angle)
-
+                if int(i % self.number_of_directions) * self.step_angle <= 2 * np.pi:
+                    position_observe[j][i][0] = position_observe[j - 1][int(i / self.number_of_directions)][0] + self.step_distance * np.cos(int(i % self.number_of_directions) * self.step_angle)
+                    position_observe[j][i][1] = position_observe[j - 1][int(i / self.number_of_directions)][1] + self.step_distance * np.sin(int(i % self.number_of_directions) * self.step_angle)
+                else:
+                    position_observe[j][i][0] = position_observe[j - 1][int(i / self.number_of_directions)][0]
+                    position_observe[j][i][1] = position_observe[j - 1][int(i / self.number_of_directions)][1]
         # Fill in value tree
         for j in range(1, self.path_depth + 1):
             for i in range(self.number_of_directions ** j):
