@@ -32,7 +32,19 @@ class lauv:
         self.my_belief_target = BELIEF.belief_target(self.size_world, self.my_sensor_target, self.number_of_robots, self.id_robot)
         self.my_belief_position = BELIEF.belief_position(self.id_robot, self.position_robot_estimate, self.my_sensor_distance, self.my_sensor_motion, self.number_of_robots)
 
+<<<<<<< dcc22b48fea3c8579d4110f633d575b504de3c79
         self.my_decision = DECISION.decision(self.size_world, self.my_belief_target, self.my_belief_position, self.id_robot, self.id_contact, self.position_robot_estimate, self.position_robot_estimate, self.my_sensor_target, self.path_depth, self.number_of_directions, self.step_distance)
+=======
+<<<<<<< Updated upstream
+        self.my_decision = DECISION.decision(self.size_world, self.my_belief_target,self.id_robot, self.position_robot_estimate, self.my_sensor_target, self.path_depth, number_of_directions, self.step_distance)
+=======
+<<<<<<< Updated upstream
+        self.my_decision = DECISION.decision(self.size_world, self.my_belief_target, self.my_belief_position, self.id_robot, self.id_contact, self.position_robot_estimate, self.position_robot_estimate, self.my_sensor_target, self.path_depth, self.number_of_directions, self.step_distance)
+=======
+        self.my_decision = DECISION.decision(self.size_world, self.my_belief_target,self.id_robot, self.position_robot_estimate, self.my_sensor_target, self.path_depth, self.number_of_directions, self.step_distance)
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
+>>>>>>> Auto stash before merge of "master" and "origin/master"
 
 
     def update_exact(self, angle_step_distance):
