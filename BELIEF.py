@@ -135,10 +135,12 @@ class belief_position:
     def initialize_neighbour(self, id_robot, belief_state):
         dx = belief_state[0][0] - self.position_robot_estimate[self.id_robot][0]
         dy = belief_state[1][0] - self.position_robot_estimate[self.id_robot][1]
-        mean_phi = np.arctan2(dy, dx)
-        mean_r = np.sqrt(dx ** 2 + dy ** 2)
+        self.mean_phi = np.arctan2(dy, dx)
+        self.mean_r = np.sqrt(dx ** 2 + dy ** 2)
+        self.std_phi = belief_state[0][1] / self.mean_r
+        self.std_r = belief_state[0][1]
 
-        self.belief_state[id_robot] = [[mean_phi, belief_state[0][1] / mean_r], [mean_r, belief_state[1][1]]]
+        self.belief_state[id_robot] = [[self.mean_phi, self.std_phi], [self.mean_r, self.std_r]]
 
 
     def update_robot(self, angle_step_distance):
@@ -163,10 +165,10 @@ class belief_position:
                 # Transform into coordinate system with new orgin
                 self.transform(x)
 
-                # Make uncertanty grow
+                # Make uncertanty grow because the neighbour moves
                 prior_phi = self.belief_state[x][0]
                 prior_r = self.belief_state[x][1]
-
+                
                 velocity_vector_phi = [prior_phi[0], self.my_sensor_motion.std_move / self.belief_state[x][1][0]]
                 velocity_vector_r = [prior_r[0], self.my_sensor_motion.std_move]
 
@@ -183,12 +185,13 @@ class belief_position:
                 posterior_phi = new_prior_phi
                 posterior_r = [new_mean_r, new_std_r]
 
-                # Increase uncertanty because observation point is uncertain
+                '''# Increase uncertanty because observation point is uncertain
                 posterior_phi[1] = np.sqrt(posterior_phi[1] ** 2 + (self.belief_state[self.id_robot][0][1] / posterior_r[0]) ** 2)
-                posterior_r[1] = np.sqrt(posterior_r[1] ** 2 + self.belief_state[self.id_robot][0][1] ** 2)
-
+                posterior_r[1] = np.sqrt(posterior_r[1] ** 2 + self.belief_state[self.id_robot][0][1] ** 2)'''
+                
                 self.belief_state[x][0] = posterior_phi
                 self.belief_state[x][1] = posterior_r
+
 
     def transform(self, id_robot):
         dx_before = self.belief_state[id_robot][1][0] * np.cos(self.belief_state[id_robot][0][0])
@@ -199,7 +202,13 @@ class belief_position:
         dx_now = dx_before - dx_trans
         dy_now = dy_before - dy_trans
 
+        # Unnormalize the std (makes it independent of old mean_r)
+        self.std_phi = self.std_phi * self.mean_r
+
         self.mean_phi = np.arctan2(dy_now, dx_now)
         self.mean_r = np.sqrt(dx_now ** 2 + dy_now ** 2)
 
-        self.belief_state[id_robot] = [[self.mean_phi, self.belief_state[id_robot][0][1]],[self.mean_r, self.belief_state[id_robot][1][1]]]
+        # Normalize the std (makes it dependent of new mean_r)
+        self.std_phi = self.std_phi / self.mean_r
+
+        self.belief_state[id_robot] = [[self.mean_phi, self.std_phi],[self.mean_r, self.std_r]]

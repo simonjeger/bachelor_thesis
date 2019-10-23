@@ -14,7 +14,8 @@ class sensor_target:
 
         # Parameters for the likelihood function
         self.cross_over = 1 / 14 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 10
-        self.width = 1 / 950 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 0.15
+        #self.width = 1 / 1250 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 0.11
+        self.width = 1 / 1250 * np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)  # circa 0.11
         self.inclination = 30
         self.max_pos = 0.8
         self.max_neg = 0.005
@@ -59,7 +60,7 @@ class sensor_motion:
 
         # Parameters for the likelihood function
         self.std_v = 0.5
-        self.std_move = self.std_prob(0.95) * step_distance
+        self.std_move = self.std_prob(0.9) * step_distance
 
     def std_prob(self,certainty):
         # This function determines what the factor to the step_distance should be, so that it contains a certan certainty

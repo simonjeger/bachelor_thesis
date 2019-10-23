@@ -77,7 +77,7 @@ class simulation:
 
         # Looking for target until belief_state is accurate enough or runtime max is reached
         i = 0
-        max_belief = 1 / 950 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 0.15
+        max_belief = 1 / 1250 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 0.11
 
         while (np.max(belief_maximum) < max_belief) & (i < 200):
 
@@ -205,10 +205,10 @@ class simulation:
 
 
 # Initialize a simulation
-my_simulation = simulation('test',[100,100],[[0,0], [99,0], [0,99], [99,99]])
+my_simulation = simulation('test',[100,100],[[0,0], [49,49]])
 for i in range(10):
     # Everytime I set a new random position for the target
-    my_simulation.run([np.random.randint(79), np.random.randint(79)])
+    my_simulation.run([np.random.randint(100), np.random.randint(100)])
     # Get information of performance over the total of all my simulations
     my_simulation.performance_target_position()
     my_simulation.performance_time()
