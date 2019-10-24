@@ -90,7 +90,7 @@ class result:
 
             # Make connecting line when contact between robots
             for y in range(len(self.my_robot[x].position_robot_estimate)):
-                contact = self.my_robot[x].id_contact[y]
+                contact = self.my_robot[x].id_contact[y][0]
                 if (contact == 1) & (x != y):
                     nei_x = self.my_robot[x].position_robot_estimate[x][0] + self.my_robot[x].my_belief_position.belief_state[y][1][0] * np.cos(self.my_robot[x].my_belief_position.belief_state[y][0][0])
                     nei_y = self.my_robot[x].position_robot_estimate[x][1] + self.my_robot[x].my_belief_position.belief_state[y][1][0] * np.sin(self.my_robot[x].my_belief_position.belief_state[y][0][0])

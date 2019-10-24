@@ -77,7 +77,7 @@ class simulation:
 
         # Looking for target until belief_state is accurate enough or runtime max is reached
         i = 0
-        max_belief = 1 / 1250 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 0.11
+        max_belief = 1 / 1450 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 0.098
 
         while (np.max(belief_maximum) < max_belief) & (i < 200):
 
@@ -121,6 +121,7 @@ class simulation:
             # Exchange belief if close enough
             distance_estimate = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
             distance_exact = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
+
             for x in range(len(self.my_robot)):
                 for y in range(len(self.my_robot)):
 
@@ -128,20 +129,23 @@ class simulation:
                     distance_estimate[x][y] = self.my_robot[x].my_belief_position.belief_state[y][1][0]
                     distance_exact[x][y] = np.sqrt((self.my_robot[x].position_robot_exact[x][0] - self.my_robot[x].position_robot_exact[y][0]) ** 2 + (self.my_robot[x].position_robot_exact[x][1] - self.my_robot[x].position_robot_exact[y][1]) ** 2)
 
-                    if (distance_estimate[x][y] < self.my_robot[x].communication_range_observation) & (distance_exact[x][y] < self.my_robot[x].communication_range_observation) & (x != y):
-                        self.my_robot[x].id_contact[y] = 1
+                    if (distance_estimate[x][y] < self.my_robot[x].communication_range_observation) & (distance_exact[x][y] < self.my_robot[x].communication_range_observation):
+                        self.my_robot[x].id_contact[y][0] = 1
+                        self.my_robot[y].id_contact[x][1] = 1
 
-                        # Update the position estimate
-                        self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
+                        if x != y:
+                            # Update the position estimate
+                            self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
 
-                        # Merge all the logs, if they contain more information than I already know
-                        for z in range(len(self.my_robot)):
-                            if len(self.my_robot[x].my_belief_target.position_log_estimate[z]) < len(self.my_robot[y].my_belief_target.position_log_estimate[z]):
-                                self.my_robot[x].my_belief_target.merge(z, self.my_robot[y].my_belief_target.position_log_estimate[z], self.my_robot[y].my_belief_target.observation_log[z])
+                            # Merge all the logs, if they contain more information than I already know
+                            for z in range(len(self.my_robot)):
+                                if len(self.my_robot[x].my_belief_target.position_log_estimate[z]) < len(self.my_robot[y].my_belief_target.position_log_estimate[z]):
+                                    self.my_robot[x].my_belief_target.merge(z, self.my_robot[y].my_belief_target.position_log_estimate[z], self.my_robot[y].my_belief_target.observation_log[z])
 
                     # If they are not close enough to communicate, they don't have contact
                     else:
-                        self.my_robot[x].id_contact[y] = 0
+                        self.my_robot[x].id_contact[y][0] = 0
+                        self.my_robot[y].id_contact[x][1] = 0
 
             # How long it takes to compute everything
             self.time_computation = self.time_computation + (time.time() - self.time_start)
@@ -205,7 +209,7 @@ class simulation:
 
 
 # Initialize a simulation
-my_simulation = simulation('test',[100,100],[[0,0], [49,49]])
+my_simulation = simulation('test',[100,100],[[0,0], [99,0]])
 for i in range(10):
     # Everytime I set a new random position for the target
     my_simulation.run([np.random.randint(100), np.random.randint(100)])

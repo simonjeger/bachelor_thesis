@@ -185,9 +185,9 @@ class belief_position:
                 posterior_phi = new_prior_phi
                 posterior_r = [new_mean_r, new_std_r]
 
-                '''# Increase uncertanty because observation point is uncertain
+                # Increase uncertanty because observation point is uncertain
                 posterior_phi[1] = np.sqrt(posterior_phi[1] ** 2 + (self.belief_state[self.id_robot][0][1] / posterior_r[0]) ** 2)
-                posterior_r[1] = np.sqrt(posterior_r[1] ** 2 + self.belief_state[self.id_robot][0][1] ** 2)'''
+                posterior_r[1] = np.sqrt(posterior_r[1] ** 2 + self.belief_state[self.id_robot][0][1] ** 2)
                 
                 self.belief_state[x][0] = posterior_phi
                 self.belief_state[x][1] = posterior_r

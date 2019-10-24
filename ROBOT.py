@@ -15,7 +15,7 @@ class lauv:
         self.position_target = position_target
         self.number_of_robots = number_of_robots
         self.id_robot = id_robot
-        self.id_contact = [0] * number_of_robots
+        self.id_contact = [[0, 0] for i in range(number_of_robots)] # [Do I have contact to him, does he has contact to me]
         self.position_robot_exact = copy.deepcopy(position_initial)
         self.position_robot_estimate = copy.deepcopy(position_initial)
 
@@ -32,7 +32,7 @@ class lauv:
         self.my_belief_target = BELIEF.belief_target(self.size_world, self.my_sensor_target, self.number_of_robots, self.id_robot)
         self.my_belief_position = BELIEF.belief_position(self.id_robot, self.position_robot_estimate, self.my_sensor_distance, self.my_sensor_motion, self.number_of_robots)
 
-        self.my_decision = DECISION.decision(self.size_world, self.my_belief_target,self.id_robot, self.position_robot_estimate, self.my_sensor_target, self.path_depth, self.number_of_directions, self.step_distance)
+        self.my_decision = DECISION.decision(self.size_world, self.my_belief_target,self.id_robot, self.id_contact, self.position_robot_estimate, self.my_sensor_target, self.path_depth, self.number_of_directions, self.step_distance)
 
 
     def update_exact(self, angle_step_distance):

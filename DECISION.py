@@ -4,11 +4,12 @@ import copy
 
 class decision:
 
-    def __init__(self, size_world, my_belief_target, id_robot, position_robot_estimate, my_sensor_target, path_depth, number_of_directions, step_distance):
+    def __init__(self, size_world, my_belief_target, id_robot, id_contact, position_robot_estimate, my_sensor_target, path_depth, number_of_directions, step_distance):
         self.size_world = size_world
         self.my_belief_target = my_belief_target
         self.position_robot_estimate = position_robot_estimate
         self.id_robot = id_robot
+        self.id_contact = id_contact
         self.my_sensor_target = my_sensor_target
 
         # Parameters that determine the motion of the robot
@@ -19,6 +20,12 @@ class decision:
 
 
     def decide(self):
+        # Find out who is involved in the decision
+        id_robot = []
+        for x in range(len(self.id_contact)):
+            if self.id_contact[x][1] == 1:
+                id_robot = id_robot + [x]
+
         # Initialize all possible positions and according values
         position_observe = []
         value = []
