@@ -27,58 +27,99 @@ class decision:
                 id_robot = id_robot + [x]
 
         # Initialize all possible positions and according values
-        position_observe = []
-        value = []
-        for k in range(0, self.path_depth + 1):
-            for j in range(1,len(id_robot) + 1):
-                position_observe = position_observe + [[[0] * len(id_robot) for i in range((self.number_of_directions + 1) ** (k*j))]]
-                value = value + [[0 for i in range((self.number_of_directions + 1) ** (k*j))]]
+        position_observe = [[[0]]]
+        value = [[0]]
+        for k in range(1, self.path_depth + 1):
+            for j in range(0, len(id_robot)):
+                layer = (k - 1) * len(id_robot) + j + 1
+                position_observe = position_observe + [[[0, 0] for i in range((self.number_of_directions + 1) ** (layer))]]
+
+                value = value + [[0 for i in range((self.number_of_directions + 1) ** (layer))]]
 
         # Determine start point & start value of path tree
-        for j in range(0, len(id_robot)):
-            position_observe[0][0][j] = copy.deepcopy(self.position_robot_estimate[id_robot[j]])
-        value[0][0] = 0
+        for k in range(1, 2):
+            for j in range(0, len(id_robot)):
+                layer = (k - 1) * len(id_robot) + j + 1
 
-        # Fill in path tree
-        for k in range(1, self.path_depth + 1):
-            for j in range(1, len(id_robot) + 1):
-                for i in range((self.number_of_directions + 1) ** (k*j)):
-                    if (i % (self.number_of_directions) != 0) | (i == 0):
-                        p_x = position_observe[k*j-1][int(i / (self.number_of_directions + 1))][j-1][0] + self.step_distance * np.cos((i % self.number_of_directions) * self.step_angle)
-                        p_y = position_observe[k*j-1][int(i / (self.number_of_directions + 1))][j-1][1] + self.step_distance * np.sin((i % self.number_of_directions) * self.step_angle)
-                        position_observe[k*j][i][j-1] = [p_x, p_y]
+                # Determine start position depending on which robot we are looking at
+                if id_robot[j] == self.id_robot:
+                    position_start = copy.deepcopy(self.position_robot_estimate[id_robot[j]])
+                else:
+                    dx = copy.deepcopy(self.position_robot_estimate[id_robot[j]][1] * np.cos(self.position_robot_estimate[id_robot[j]][0]))
+                    dy = copy.deepcopy(self.position_robot_estimate[id_robot[j]][1] * np.sin(self.position_robot_estimate[id_robot[j]][0]))
+                    position_start = [copy.deepcopy(self.position_robot_estimate[self.id_robot][0]) + dx, copy.deepcopy(self.position_robot_estimate[self.id_robot][1]) + dy]
+
+                for i in range((self.number_of_directions + 1) ** layer):
+
+                    # Fill the in the first depth level
+                    if (i % self.number_of_directions != 0) | (i == 0):
+                        p_x = position_start[0] + self.step_distance * np.cos((i % self.number_of_directions) * self.step_angle)
+                        p_y = position_start[1] + self.step_distance * np.sin((i % self.number_of_directions) * self.step_angle)
+                        position_observe[layer][i] = [p_x, p_y]
                     else:
-                        p_x = position_observe[k*j-1][int(i / (self.number_of_directions + 1))][j-1][0]
-                        p_y = position_observe[k*j-1][int(i / (self.number_of_directions + 1))][j-1][1]
-                        position_observe[k*j][i][j-1] = [p_x, p_y]
+                        position_observe[layer][i] = position_start
+
+        #value[0][0] = 0
+
+        #print(position_observe)
+        #print('\n')
+
+
+        # Fill in the deeper path tree
+        for k in range(2, self.path_depth + 1):
+            for j in range(0, len(id_robot)):
+                layer = (k - 1) * len(id_robot) + j + 1
+                for i in range((self.number_of_directions + 1) ** layer):
+                    if (i % self.number_of_directions != 0) | (i == 0):
+                        p_x = position_observe[layer-len(id_robot)][int(i / (self.number_of_directions + 1) ** len(id_robot))][0] + self.step_distance * np.cos((i % self.number_of_directions) * self.step_angle)
+                        p_y = position_observe[layer-len(id_robot)][int(i / (self.number_of_directions + 1) ** len(id_robot))][1] + self.step_distance * np.sin((i % self.number_of_directions) * self.step_angle)
+                        position_observe[layer][i] = [p_x, p_y]
+                    else:
+                        p_x = position_observe[layer-len(id_robot)][int(i / (self.number_of_directions + 1))][0]
+                        p_y = position_observe[layer-len(id_robot)][int(i / (self.number_of_directions + 1))][1]
+                        position_observe[layer][i] = [p_x, p_y]
 
         # Fill in value tree
         for k in range(1, self.path_depth + 1):
-            for j in range(0, len(id_robot) + 1):
-                for i in range((self.number_of_directions + 1) ** (k*j)):
+            for j in range(len(id_robot)):
+                layer = (k - 1) * len(id_robot) + j + 1
+                for i in range((self.number_of_directions + 1) ** layer):
 
                     # If path leads outside of world
-                    if (position_observe[k*j][i][j-1][0] < 0) | (position_observe[k*j][i][j-1][0] >= self.size_world[0]) | (position_observe[k*j][i][j-1][1] < 0) | (position_observe[k*j][i][j-1][1] >= self.size_world[1]):
-                        value[k*j][i] = 0
+                    if (position_observe[layer][i][0] < 0) | (position_observe[layer][i][0] >= self.size_world[0]) | (position_observe[layer][i][1] < 0) | (position_observe[layer][i][1] >= self.size_world[1]):
+                        value[layer][i] = 0
 
                     # Rate every path through marginalisation
                     else:
                         x = np.linspace(0,self.size_world[0] - 1, self.size_world[0])
                         y = np.linspace(0, self.size_world[1] - 1, self.size_world[1])
                         xy = np.meshgrid(x,y)
-                        distance = np.sqrt(np.subtract(xy[0], position_observe[k*j][i][j-1][0])**2+np.subtract(xy[1], position_observe[k*j][i][j-1][1])**2)
+                        distance = np.sqrt(np.subtract(xy[0], position_observe[layer][i][0])**2 + np.subtract(xy[1], position_observe[layer][i][1])**2)
                         weight_true = np.sum(np.multiply(self.my_sensor_target.likelihood(distance), self.my_belief_target.belief_state))
                         weight_false = 1 - weight_true
-                        value[k*j][i] = weight_true * self.kullback_leibler(self.my_belief_target.test_true(position_observe[k*j][i][j-1]), self.my_belief_target.belief_state) + weight_false * self.kullback_leibler(self.my_belief_target.test_false(position_observe[k*j][i][j-1]), self.my_belief_target.belief_state)
+                        value[layer][i] = weight_true * self.kullback_leibler(self.my_belief_target.test_true(position_observe[layer][i]), self.my_belief_target.belief_state) + weight_false * self.kullback_leibler(self.my_belief_target.test_false(position_observe[layer][i]), self.my_belief_target.belief_state)
+
+        matrix = copy.deepcopy(value)
+        for row in matrix:
+            print(' '.join(map(str, row)))
+        print('\n')
 
         # Sum up the value tree and store in last level
         for k in range(1, self.path_depth + 1):
-            for j in range(0, len(id_robot) + 1):
-                for i in range((self.number_of_directions + 1)** (k * j)):
-                    value[k*j][i] = value [k*j][i] + value[k*j-1][int(i / (self.number_of_directions + 1))]
+            for j in range(len(id_robot)):
+                layer = (k - 1) * len(id_robot) + j + 1
+                for i in range((self.number_of_directions + 1) ** layer):
+                    value[layer][i] = value[layer][i] + value[layer-1][int(i / (self.number_of_directions + 1))]
+
+        matrix = copy.deepcopy(value)
+        for row in matrix:
+            print(' '.join(map(str, row)))
+        print('\n')
+        print('\n')
 
         # Choose path
-        choice = int(np.argmax(value[-1]) / ((self.number_of_directions + 1) ** ((self.path_depth - 1) * len(id_robot))))
+        my_layer = (self.path_depth - 1) * len(id_robot) + len(id_robot) - id_robot.index(self.id_robot) - 1
+        choice = int(np.argmax(value[-1]) / ((self.number_of_directions + 1) ** my_layer)) % self.number_of_directions
 
         return [choice * self.step_angle, self.step_distance]
 

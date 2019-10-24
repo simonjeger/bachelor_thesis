@@ -89,6 +89,11 @@ class simulation:
             for x in range(len(self.my_robot)):
                 belief_maximum[x] = np.max(self.my_robot[x].my_belief_target.belief_state)
 
+            # Update all position estimates based on my belief
+            for x in range(len(self.my_robot)):
+                self.my_robot[x].update_estimate_robot()
+                self.my_robot[x].update_estimate_neighbour()
+
             # Deside where to go next, go there and update my beliefs accordingly
             angle_step_distance = [0] * len(self.my_robot)
             for x in range(len(self.my_robot)):
@@ -136,7 +141,7 @@ class simulation:
                             self.my_robot[x].id_contact[y][0] = 1
                             self.my_robot[y].id_contact[x][1] = 1
 
-                            # Update the position estimate
+                            # Update the position estimate of my neighbour about me
                             self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
 
                             # Merge all the logs, if they contain more information than I already know
