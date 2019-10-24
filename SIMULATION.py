@@ -125,15 +125,17 @@ class simulation:
             for x in range(len(self.my_robot)):
                 for y in range(len(self.my_robot)):
 
-                    # Do I think we are close enough, does my neighbour think that too & are we actually close enough?
-                    distance_estimate[x][y] = self.my_robot[x].my_belief_position.belief_state[y][1][0]
-                    distance_exact[x][y] = np.sqrt((self.my_robot[x].position_robot_exact[x][0] - self.my_robot[x].position_robot_exact[y][0]) ** 2 + (self.my_robot[x].position_robot_exact[x][1] - self.my_robot[x].position_robot_exact[y][1]) ** 2)
+                    # I don't have to look how far away I am from myself
+                    if (x != y):
 
-                    if (distance_estimate[x][y] < self.my_robot[x].communication_range_observation) & (distance_exact[x][y] < self.my_robot[x].communication_range_observation):
-                        self.my_robot[x].id_contact[y][0] = 1
-                        self.my_robot[y].id_contact[x][1] = 1
+                        # Do I think we are close enough, does my neighbour think that too & are we actually close enough?
+                        distance_estimate[x][y] = self.my_robot[x].my_belief_position.belief_state[y][1][0]
+                        distance_exact[x][y] = np.sqrt((self.my_robot[x].position_robot_exact[x][0] - self.my_robot[x].position_robot_exact[y][0]) ** 2 + (self.my_robot[x].position_robot_exact[x][1] - self.my_robot[x].position_robot_exact[y][1]) ** 2)
 
-                        if x != y:
+                        if (distance_estimate[x][y] < self.my_robot[x].communication_range_observation) & (distance_exact[x][y] < self.my_robot[x].communication_range_observation):
+                            self.my_robot[x].id_contact[y][0] = 1
+                            self.my_robot[y].id_contact[x][1] = 1
+
                             # Update the position estimate
                             self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
 
@@ -142,10 +144,10 @@ class simulation:
                                 if len(self.my_robot[x].my_belief_target.position_log_estimate[z]) < len(self.my_robot[y].my_belief_target.position_log_estimate[z]):
                                     self.my_robot[x].my_belief_target.merge(z, self.my_robot[y].my_belief_target.position_log_estimate[z], self.my_robot[y].my_belief_target.observation_log[z])
 
-                    # If they are not close enough to communicate, they don't have contact
-                    else:
-                        self.my_robot[x].id_contact[y][0] = 0
-                        self.my_robot[y].id_contact[x][1] = 0
+                        # If they are not close enough to communicate, they don't have contact
+                        else:
+                            self.my_robot[x].id_contact[y][0] = 0
+                            self.my_robot[y].id_contact[x][1] = 0
 
             # How long it takes to compute everything
             self.time_computation = self.time_computation + (time.time() - self.time_start)

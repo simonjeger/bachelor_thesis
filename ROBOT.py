@@ -16,6 +16,7 @@ class lauv:
         self.number_of_robots = number_of_robots
         self.id_robot = id_robot
         self.id_contact = [[0, 0] for i in range(number_of_robots)] # [Do I have contact to him, does he has contact to me]
+        self.id_contact[self.id_robot] = [1, 1]
         self.position_robot_exact = copy.deepcopy(position_initial)
         self.position_robot_estimate = copy.deepcopy(position_initial)
 
