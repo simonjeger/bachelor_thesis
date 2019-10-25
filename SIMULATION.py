@@ -216,7 +216,7 @@ class simulation:
 
 
 # Initialize a simulation
-my_simulation = simulation('test',[100,100],[[0,0], [99,0]])
+my_simulation = simulation('test',[100,100],[[0,0], [99,99]])
 for i in range(10):
     # Everytime I set a new random position for the target
     my_simulation.run([np.random.randint(100), np.random.randint(100)])

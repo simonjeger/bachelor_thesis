@@ -50,7 +50,6 @@ class decision:
                     position_start = [copy.deepcopy(self.position_robot_estimate[self.id_robot][0]) + dx, copy.deepcopy(self.position_robot_estimate[self.id_robot][1]) + dy]
 
                 for i in range((self.number_of_directions + 1) ** layer):
-
                     # Fill the in the first depth level
                     if (i % self.number_of_directions != 0) | (i == 0):
                         p_x = position_start[0] + self.step_distance * np.cos((i % self.number_of_directions) * self.step_angle)
@@ -69,14 +68,15 @@ class decision:
         for k in range(2, self.path_depth + 1):
             for j in range(0, len(id_robot)):
                 layer = (k - 1) * len(id_robot) + j + 1
+
                 for i in range((self.number_of_directions + 1) ** layer):
                     if (i % self.number_of_directions != 0) | (i == 0):
-                        p_x = position_observe[layer-len(id_robot)][int(i / (self.number_of_directions + 1) ** len(id_robot))][0] + self.step_distance * np.cos((i % self.number_of_directions) * self.step_angle)
-                        p_y = position_observe[layer-len(id_robot)][int(i / (self.number_of_directions + 1) ** len(id_robot))][1] + self.step_distance * np.sin((i % self.number_of_directions) * self.step_angle)
+                        p_x = position_observe[layer-len(id_robot)][int(i / ((self.number_of_directions + 1) ** len(id_robot)))][0] + self.step_distance * np.cos((i % self.number_of_directions) * self.step_angle)
+                        p_y = position_observe[layer-len(id_robot)][int(i / ((self.number_of_directions + 1) ** len(id_robot)))][1] + self.step_distance * np.sin((i % self.number_of_directions) * self.step_angle)
                         position_observe[layer][i] = [p_x, p_y]
                     else:
-                        p_x = position_observe[layer-len(id_robot)][int(i / (self.number_of_directions + 1))][0]
-                        p_y = position_observe[layer-len(id_robot)][int(i / (self.number_of_directions + 1))][1]
+                        p_x = position_observe[layer-len(id_robot)][int(i / ((self.number_of_directions + 1) ** len(id_robot)))][0]
+                        p_y = position_observe[layer-len(id_robot)][int(i / ((self.number_of_directions + 1) ** len(id_robot)))][1]
                         position_observe[layer][i] = [p_x, p_y]
 
         # Fill in value tree
