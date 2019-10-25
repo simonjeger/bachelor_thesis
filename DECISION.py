@@ -36,7 +36,7 @@ class decision:
 
                 value = value + [[0 for i in range((self.number_of_directions + 1) ** (layer))]]
 
-        # Determine start point & start value of path tree
+        # Determine start level
         for k in range(1, 2):
             for j in range(0, len(id_robot)):
                 layer = (k - 1) * len(id_robot) + j + 1
@@ -49,8 +49,8 @@ class decision:
                     dy = copy.deepcopy(self.position_robot_estimate[id_robot[j]][1] * np.sin(self.position_robot_estimate[id_robot[j]][0]))
                     position_start = [copy.deepcopy(self.position_robot_estimate[self.id_robot][0]) + dx, copy.deepcopy(self.position_robot_estimate[self.id_robot][1]) + dy]
 
+                # Fill the in the first depth level
                 for i in range((self.number_of_directions + 1) ** layer):
-                    # Fill the in the first depth level
                     if (i % self.number_of_directions != 0) | (i == 0):
                         p_x = position_start[0] + self.step_distance * np.cos((i % self.number_of_directions) * self.step_angle)
                         p_y = position_start[1] + self.step_distance * np.sin((i % self.number_of_directions) * self.step_angle)
@@ -58,17 +58,12 @@ class decision:
                     else:
                         position_observe[layer][i] = position_start
 
-        #value[0][0] = 0
-
-        #print(position_observe)
-        #print('\n')
-
-
         # Fill in the deeper path tree
         for k in range(2, self.path_depth + 1):
             for j in range(0, len(id_robot)):
                 layer = (k - 1) * len(id_robot) + j + 1
 
+                # Fill the in the higher levels
                 for i in range((self.number_of_directions + 1) ** layer):
                     if (i % self.number_of_directions != 0) | (i == 0):
                         p_x = position_observe[layer-len(id_robot)][int(i / ((self.number_of_directions + 1) ** len(id_robot)))][0] + self.step_distance * np.cos((i % self.number_of_directions) * self.step_angle)
@@ -99,23 +94,12 @@ class decision:
                         weight_false = 1 - weight_true
                         value[layer][i] = weight_true * self.kullback_leibler(self.my_belief_target.test_true(position_observe[layer][i]), self.my_belief_target.belief_state) + weight_false * self.kullback_leibler(self.my_belief_target.test_false(position_observe[layer][i]), self.my_belief_target.belief_state)
 
-        matrix = copy.deepcopy(value)
-        for row in matrix:
-            print(' '.join(map(str, row)))
-        print('\n')
-
         # Sum up the value tree and store in last level
         for k in range(1, self.path_depth + 1):
             for j in range(len(id_robot)):
                 layer = (k - 1) * len(id_robot) + j + 1
                 for i in range((self.number_of_directions + 1) ** layer):
                     value[layer][i] = value[layer][i] + value[layer-1][int(i / (self.number_of_directions + 1))]
-
-        matrix = copy.deepcopy(value)
-        for row in matrix:
-            print(' '.join(map(str, row)))
-        print('\n')
-        print('\n')
 
         # Choose path
         my_layer = (self.path_depth - 1) * len(id_robot) + len(id_robot) - id_robot.index(self.id_robot) - 1

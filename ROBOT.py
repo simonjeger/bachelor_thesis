@@ -25,7 +25,6 @@ class lauv:
         self.number_of_directions = 8
         self.path_depth = 1
         self.communication_range_observation = 1 / 5 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 30
-        #self.communication_range_observation = 150
 
         self.my_sensor_target = SENSOR.sensor_target(self.path, self.size_world, self.position_target)
         self.my_sensor_motion = SENSOR.sensor_motion(self.path, self.size_world, self.step_distance)
