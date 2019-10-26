@@ -1,10 +1,9 @@
 import numpy as np
 from scipy.special import erf
 import matplotlib.pyplot as plt
-import copy
 
 
-class sensor_target:
+class sensor_target_boolean:
 
     def __init__(self, path, size_world, position_target):
         self.path = path
@@ -14,7 +13,6 @@ class sensor_target:
 
         # Parameters for the likelihood function
         self.cross_over = 1 / 14 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 10
-        #self.width = 1 / 1250 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 0.11
         self.width = 1 / 1250 * np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)  # circa 0.11
         self.inclination = 30
         self.max_pos = 0.8
@@ -49,6 +47,77 @@ class sensor_target:
         # Save picture in main folder
         plt.savefig(self.path + '/sensor/' + self.path + '_sensor_target.png')
         plt.close()
+
+
+
+'''class sensor_target_bearing:
+
+    def __init__(self, path, size_world, position_target):
+        self.path = path
+        self.position_target = position_target
+        self.size_world = size_world
+        self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
+
+        # Parameters for the likelihood function
+        self.cross_over = 1 / 14 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 10
+        self.width = 1 / 1250 * np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)  # circa 0.11
+        self.inclination = 30
+        self.max_pos = 0.8
+        self.max_neg = 0.005
+
+
+    def sense(self, position_observe):
+        # Depending on the distance from the observed position to the sensor give back true or false
+        distance = np.sqrt((self.position_target[0] - position_observe[0]) ** 2 + (self.position_target[1] - position_observe[1]) ** 2)
+        angle = np.arctan2(self.position_target[1] - position_observe[1], self.position_target[0] - position_observe[0])
+        distance_cdf = np.linspace(- 360, 360 - 1, 2 * 360)
+
+        if np.random.random_sample(1) < self.likelihood_boolean(distance):
+            cdf_angle = self.cdf_angle(angle, distance, distance_cdf)
+            return distance_cdf[self.find_nearest(cdf_angle, np.random.random_sample(1))]
+        else:
+            return 'no_measurement'
+
+    def likelihood_boolean(self, distance):
+        return self.max_pos - (self.max_pos - self.max_neg) * 1 / 2 * (1 + erf((np.multiply(1 / self.width, np.subtract(distance, self.cross_over))) / (self.inclination * np.sqrt(2))))
+
+    def likelihood_angle(self, angle, distance, distance_cdf):
+        distance()
+        std = self.standard_deviation(distance)
+        measurement = np.arctan2(self.position_target[1] - position_observe[1], self.position_target[0] - position_observe[0])
+        normal_distr = 1 / np.sqrt(2 * np.pi * std ** 2) * np.exp(- np.square(np.subtract(angle, measurement)) / (2 * std ** 2))
+        return normal_distr
+
+    def standard_deviation(self, distance):
+        return 1 + distance * 5 / np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)  # circa mean / 30
+
+    def cdf_angle(self, angle, distance, x):
+        std = self.standard_deviation(distance)
+        cdf = 1 / 2 * (1 + erf((np.subtract(x, angle) / (std * np.sqrt(2)))))
+        return cdf
+
+    def find_nearest(self, list, value):
+        list = np.asarray(list)
+        idx = (np.abs(list - value)).argmin()
+        return idx
+
+    def picture_save(self):
+        # Initalize both axis
+        x = np.linspace(0, self.distance_max - 1, int(self.distance_max))
+        y = self.likelihood_boolean(x)
+
+        # Plot sensor model
+        plt.plot(x, y)
+        plt.xlabel('Distance to target')
+        plt.xlim((0, self.distance_max))
+        plt.ylabel('Likelihood')
+        plt.ylim((0, 1))
+        plt.title('sensor_target')
+
+        # Save picture in main folder
+        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_target.png')
+        plt.close()'''
+
 
 
 class sensor_motion:
