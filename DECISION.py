@@ -26,14 +26,16 @@ class decision:
             if self.id_contact[x][1] == 1:
                 id_robot = id_robot + [x]
 
-        # Initialize all possible positions, according novelty matrices and values
+        # Initialize all possible positions, according novelty lists and values
         position_observe = [[[0]]]
-        novelty = [[[[[0]]]]]
+        novelty = [[0]]
         value = [[0]]
         for k in range(1, self.path_depth + 1):
             for j in range(0, len(id_robot)):
                 layer = (k - 1) * len(id_robot) + j + 1
                 position_observe = position_observe + [[[0, 0] for i in range((self.number_of_directions + 1) ** (layer))]]
+
+                novelty = novelty + [[[[0] for i in range(layer - 1)] for j in range((self.number_of_directions + 1) ** (layer))]]
 
                 value = value + [[0 for i in range((self.number_of_directions + 1) ** (layer))]]
 
@@ -75,25 +77,21 @@ class decision:
                         p_y = position_observe[layer-len(id_robot)][int(i / ((self.number_of_directions + 1) ** len(id_robot)))][1]
                         position_observe[layer][i] = [p_x, p_y]
 
-        # Generate and fill in novelty tree
-        layer_max = (self.path_depth - 1) * len(id_robot) + len(id_robot)
-        novelty = [[[[0] for y in range(layer_max)] for x in range(layer_max)] for i in range((self.number_of_directions + 1) ** (layer_max))]
+        # Fill in novelty tree
+        for k in range(1, self.path_depth + 1):
+            for j in range(0, len(id_robot)):
+                layer = (k - 1) * len(id_robot) + j + 1
 
-        # Every branch in the highest level has it's own unique path
-        for b in range((self.number_of_directions + 1) ** layer_max):
-            for y in range(1, layer_max + 1):
-                for x in range(1, layer_max + 1):
-                    position_x = position_observe[x][int(b / ((self.number_of_directions + 1) ** (layer_max - x)))]
-                    position_y = position_observe[y][int(b / ((self.number_of_directions + 1) ** (layer_max - y)))]
+                # This concept doesn't make sense for the first layer
+                if layer > 1:
+                    for i in range((self.number_of_directions + 1) ** layer):
+                        for n in range(0, len(novelty[layer][i])):
+                            p_dx = position_observe[layer][i][0] - position_observe[layer-(n+1)][int(i / ((self.number_of_directions + 1) ** (n+1)))][0]
+                            p_dy = position_observe[layer][i][1] - position_observe[layer-(n+1)][int(i / ((self.number_of_directions + 1) ** (n+1)))][1]
+                            novelty[layer][i][n] = 1 - self.my_sensor_target.likelihood(np.sqrt(p_dx ** 2 + p_dy ** 2))
 
-                    # Fill in distance between two points
-                    if x != y:
-                        novelty[b][y-1][x-1] = np.sqrt((position_x[0] - position_y[0]) ** 2 + (position_x[1] - position_y[1]) ** 2)
-                    else:
-                        novelty[b][y-1][x-1] = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
-
-        # Calculate the novelty index
-        novelty = 1 - self.my_sensor_target.likelihood(novelty)
+                        # Store information in last value
+                        novelty[layer][i][-1] = np.sum(novelty[layer][i])
 
         # Fill in value tree
         for k in range(1, self.path_depth + 1):
@@ -113,8 +111,15 @@ class decision:
                         distance = np.sqrt(np.subtract(xy[0], position_observe[layer][i][0])**2 + np.subtract(xy[1], position_observe[layer][i][1])**2)
                         weight_true = np.sum(np.multiply(self.my_sensor_target.likelihood(distance), self.my_belief_target.belief_state))
                         weight_false = 1 - weight_true
-                        weight_novelty = 
-                        value[layer][i] = weight_true * self.kullback_leibler(self.my_belief_target.test_true(position_observe[layer][i]), self.my_belief_target.belief_state) + weight_false * self.kullback_leibler(self.my_belief_target.test_false(position_observe[layer][i]), self.my_belief_target.belief_state)
+
+                        # In the first layer the novelty doesn't exist, so I set it do a default value with respect to its last know point
+                        if layer == 1:
+                            weight_novelty = 1 - self.my_sensor_target.likelihood(self.step_distance)
+
+                        # After that it does
+                        else:
+                            weight_novelty = novelty[layer][i][-1]
+                        value[layer][i] = weight_novelty * (weight_true * self.kullback_leibler(self.my_belief_target.test_true(position_observe[layer][i]), self.my_belief_target.belief_state) + weight_false * self.kullback_leibler(self.my_belief_target.test_false(position_observe[layer][i]), self.my_belief_target.belief_state))
 
         # Sum up the value tree and store in last level
         for k in range(1, self.path_depth + 1):

@@ -23,7 +23,7 @@ class lauv:
         # Initialize parameters for motion of robot
         self.step_distance = 1 / 30 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 5
         self.number_of_directions = 8
-        self.path_depth = 1
+        self.path_depth = 2
         self.communication_range_observation = 1 / 5 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 30
 
         self.my_sensor_target = SENSOR.sensor_target_boolean(self.path, self.size_world, self.position_target)
