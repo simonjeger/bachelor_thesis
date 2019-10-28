@@ -115,7 +115,7 @@ class belief_target_boolean:
 
 
 
-'''class belief_target_angle:
+class belief_target_angle:
 
     def __init__(self, size_world, my_sensor_target_angle, number_of_robots, id_robot):
         self.size_world = size_world
@@ -152,16 +152,23 @@ class belief_target_boolean:
                 for i_y in range(self.size_world[1]):
                     for i_x in range(self.size_world[0]):
                         distance[i_y][i_x] = np.sqrt((i_x - self.position_log_estimate[y][x][0]) ** 2 + (i_y - self.position_log_estimate[y][x][1]) ** 2)
-                        angle[i_y][i_x] = np.arctan2(i_x - self.position_log_estimate[y][x][0], i_y - self.position_log_estimate[y][x][1])
 
                 if self.observation_log[y][x] != 'no_measurement':
                     measurement = self.observation_log[y][x]
-                    likelihood_boolean = self.my_sensor_target_angle.likelihood_boolean(distance)
-                    likelihood_angle = self.my_sensor_target_angle.likelihood_angle(measurement, angle)
+
+                    for i_y in range(self.size_world[1]):
+                        for i_x in range(self.size_world[0]):
+                            angle_abs = np.arctan2(i_x - self.position_log_estimate[y][x][0],i_y - self.position_log_estimate[y][x][1])
+                            angle[i_y][i_x] = np.min([abs(angle_abs - measurement), abs(angle_abs - measurement - 2*np.pi), abs(angle_abs - measurement + 2*np.pi)])
+
+                    likelihood_boolean = self.my_sensor_target_angle.likelihood(distance)
+                    likelihood_angle = self.my_sensor_target_angle.likelihood_angle(angle)
+
                     likelihood = likelihood_boolean * likelihood_angle
+                    likelihood = likelihood / np.sum(likelihood)
 
                 else:
-                    likelihood = 1 - self.my_sensor_target_angle.likelihood_boolean(distance)
+                    likelihood = 1 - self.my_sensor_target_angle.likelihood(distance)
 
                 # Prior is our current belief
                 prior = self.belief_state
@@ -194,7 +201,7 @@ class belief_target_boolean:
                 distance[i_y][i_x] = np.sqrt((i_x - position_observe[0]) ** 2 + (i_y - position_observe[1]) ** 2)
 
         # Sensormeasurement true
-        likelihood = self.my_sensor_target_angle.likelihood_boolean(distance)
+        likelihood = self.my_sensor_target_angle.likelihood(distance)
 
         # Posterior (ignore normalization for now)
         posterior = likelihood * prior
@@ -219,7 +226,7 @@ class belief_target_boolean:
                 distance[i_y][i_x] = np.sqrt((i_x - position_observe[0]) ** 2 + (i_y - position_observe[1]) ** 2)
 
         # Sensormeasurement false
-        likelihood = 1 - self.my_sensor_target_angle.likelihood_boolean(distance)
+        likelihood = 1 - self.my_sensor_target_angle.likelihood(distance)
 
         # Posterior (ignore normalization for now)
         posterior = likelihood * prior
@@ -230,7 +237,7 @@ class belief_target_boolean:
         # Now we'll normalize (target must be here somewhere...)
         test = test / np.sum(self.belief_state)
 
-        return test'''
+        return test
 
 
 

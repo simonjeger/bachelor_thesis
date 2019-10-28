@@ -51,7 +51,7 @@ class sensor_target_boolean:
 
 
 
-'''class sensor_target_bearing:
+class sensor_target_angle:
 
     def __init__(self, path, size_world, position_target):
         self.path = path
@@ -65,35 +65,33 @@ class sensor_target_boolean:
         self.inclination = 30
         self.max_pos = 0.8
         self.max_neg = 0.005
+        self.std_angle = 1
 
 
     def sense(self, position_observe):
         # Depending on the distance from the observed position to the sensor give back true or false
         distance = np.sqrt((self.position_target[0] - position_observe[0]) ** 2 + (self.position_target[1] - position_observe[1]) ** 2)
         angle = np.arctan2(self.position_target[1] - position_observe[1], self.position_target[0] - position_observe[0])
-        distance_cdf = np.linspace(- 360, 360 - 1, 2 * 360)
+        distance_cdf = np.linspace(- 5 * np.pi, 5 * np.pi, 100)
 
-        if np.random.random_sample(1) < self.likelihood_boolean(distance):
-            cdf_angle = self.cdf_angle(angle, distance, distance_cdf)
+        if np.random.random_sample(1) < self.likelihood(distance):
+            cdf_angle = self.cdf_angle(angle, distance_cdf, distance)
+
             return distance_cdf[self.find_nearest(cdf_angle, np.random.random_sample(1))]
         else:
             return 'no_measurement'
 
-    def likelihood_boolean(self, distance):
+    def likelihood(self, distance):
         return self.max_pos - (self.max_pos - self.max_neg) * 1 / 2 * (1 + erf((np.multiply(1 / self.width, np.subtract(distance, self.cross_over))) / (self.inclination * np.sqrt(2))))
 
-    def likelihood_angle(self, angle, distance, distance_cdf):
-        distance()
-        std = self.standard_deviation(distance)
-        measurement = np.arctan2(self.position_target[1] - position_observe[1], self.position_target[0] - position_observe[0])
-        normal_distr = 1 / np.sqrt(2 * np.pi * std ** 2) * np.exp(- np.square(np.subtract(angle, measurement)) / (2 * std ** 2))
+    def likelihood_angle(self, angle_relativ):
+        # std is independent of distance
+        normal_distr = 1 / np.sqrt(2 * np.pi * self.std_angle ** 2) * np.exp(- np.square(angle_relativ) / (2 * self.std_angle ** 2))
         return normal_distr
 
-    def standard_deviation(self, distance):
-        return 1 + distance * 5 / np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)  # circa mean / 30
-
-    def cdf_angle(self, angle, distance, x):
-        std = self.standard_deviation(distance)
+    def cdf_angle(self, angle, x, distance):
+        # std gets normed by the distance
+        std = self.std_angle / distance
         cdf = 1 / 2 * (1 + erf((np.subtract(x, angle) / (std * np.sqrt(2)))))
         return cdf
 
@@ -105,7 +103,7 @@ class sensor_target_boolean:
     def picture_save(self):
         # Initalize both axis
         x = np.linspace(0, self.distance_max - 1, int(self.distance_max))
-        y = self.likelihood_boolean(x)
+        y = self.likelihood(x)
 
         # Plot sensor model
         plt.plot(x, y)
@@ -117,7 +115,7 @@ class sensor_target_boolean:
 
         # Save picture in main folder
         plt.savefig(self.path + '/sensor/' + self.path + '_sensor_target.png')
-        plt.close()'''
+        plt.close()
 
 
 
@@ -130,24 +128,8 @@ class sensor_motion:
 
         # Parameters for the likelihood function
         self.std_v = 0.5
-        self.std_move = step_distance / (erfinv(0.3) * np.sqrt(2)) # Probability = 0.95
-        print(self.std_move)
+        self.std_move = step_distance / (erfinv(0.4) * np.sqrt(2)) # Probability = 0.95
 
-    '''def std_prob(self,certainty):
-        # This function determines what the factor to the step_distance should be, so that it contains a certan certainty
-        x = np.linspace(-1000, 999, 1000)
-        std = [0]
-        mean = 500
-        distance_min_max = [0]
-
-        for i in range(1, 800):
-            std = std + [i]
-            cdf = self.cdf(x, [mean, std[-1]])
-
-            distance_min_max = distance_min_max + [x[self.find_nearest(cdf, certainty)] - x[self.find_nearest(cdf, 1 - certainty)]]
-
-        factor = (distance_min_max[200] - distance_min_max[0]) / (std[200] - std[0])
-        return factor'''
 
     def sense(self, angle_step_distance):
         # My measurement will be a bit off the true x and y position
