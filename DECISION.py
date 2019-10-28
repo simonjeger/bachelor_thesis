@@ -90,8 +90,8 @@ class decision:
                             p_dy = position_observe[layer][i][1] - position_observe[layer-(n+1)][int(i / ((self.number_of_directions + 1) ** (n+1)))][1]
                             novelty[layer][i][n] = 1 - self.my_sensor_target.likelihood(np.sqrt(p_dx ** 2 + p_dy ** 2))
 
-                        # Store information in last value
-                        novelty[layer][i][-1] = np.sum(novelty[layer][i])
+                        # Store normalised novelty weight in last value
+                        novelty[layer][i][-1] = np.sum(novelty[layer][i]) / (len(novelty[layer][i]))
 
         # Fill in value tree
         for k in range(1, self.path_depth + 1):

@@ -285,27 +285,28 @@ class belief_position:
                 # Transform into coordinate system with new orgin
                 self.transform(x)
 
+                # Make measurement (needed for the following process)
+                measurement = self.my_sensor_distance.sense(x)
+                likelihood_r = self.my_sensor_distance.likelihood(measurement)
+
                 # Make uncertanty grow because the neighbour moves
                 prior_phi = self.belief_state[x][0]
                 prior_r = self.belief_state[x][1]
-                
-                velocity_vector_phi = [prior_phi[0], self.my_sensor_motion.std_move / self.belief_state[x][1][0]]
+
+                velocity_vector_phi = [prior_phi[0], self.my_sensor_motion.std_move / measurement]
                 velocity_vector_r = [prior_r[0], self.my_sensor_motion.std_move]
 
                 new_prior_phi = [prior_phi[0], np.sqrt(prior_phi[1] ** 2 + velocity_vector_phi[1] ** 2)]
                 new_prior_r = [prior_r[0], np.sqrt(prior_r[1] ** 2 + velocity_vector_r[1] ** 2)]
 
                 # Make measurement update
-                measurement = self.my_sensor_distance.sense(x)
-                likelihood_r = self.my_sensor_distance.likelihood(measurement)
-
                 new_mean_r = (new_prior_r[0] * likelihood_r[1] ** 2 + likelihood_r[0] * new_prior_r[1] ** 2) / (new_prior_r[1] ** 2 + likelihood_r[1] ** 2)
                 new_std_r = np.sqrt((new_prior_r[1] ** 2 * likelihood_r[1] ** 2) / (new_prior_r[1] ** 2 + likelihood_r[1] ** 2))
 
                 posterior_phi = new_prior_phi
                 posterior_r = [new_mean_r, new_std_r]
 
-                # Increase uncertanty because observation point is uncertain
+                # Increase uncertainty because my position where I observe from, is uncertain as well
                 posterior_phi[1] = np.sqrt(posterior_phi[1] ** 2 + (self.belief_state[self.id_robot][0][1] / posterior_r[0]) ** 2)
                 posterior_r[1] = np.sqrt(posterior_r[1] ** 2 + self.belief_state[self.id_robot][0][1] ** 2)
                 

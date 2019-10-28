@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.special import erf
+from scipy.special import erfinv
 import matplotlib.pyplot as plt
 
 
@@ -129,9 +130,10 @@ class sensor_motion:
 
         # Parameters for the likelihood function
         self.std_v = 0.5
-        self.std_move = self.std_prob(0.9) * step_distance
+        self.std_move = step_distance / (erfinv(0.3) * np.sqrt(2)) # Probability = 0.95
+        print(self.std_move)
 
-    def std_prob(self,certainty):
+    '''def std_prob(self,certainty):
         # This function determines what the factor to the step_distance should be, so that it contains a certan certainty
         x = np.linspace(-1000, 999, 1000)
         std = [0]
@@ -145,7 +147,7 @@ class sensor_motion:
             distance_min_max = distance_min_max + [x[self.find_nearest(cdf, certainty)] - x[self.find_nearest(cdf, 1 - certainty)]]
 
         factor = (distance_min_max[200] - distance_min_max[0]) / (std[200] - std[0])
-        return factor
+        return factor'''
 
     def sense(self, angle_step_distance):
         # My measurement will be a bit off the true x and y position
@@ -231,11 +233,11 @@ class sensor_distance:
     def sense(self, id_robot):
         mean = np.sqrt((self.position_robot_exact[self.id_robot][0] - self.position_robot_exact[id_robot][0]) ** 2 + (self.position_robot_exact[self.id_robot][1] - self.position_robot_exact[id_robot][1]) ** 2)
         likelihood = self.likelihood(mean)
-        distance = np.linspace(0, self.distance_max - 1, int(self.distance_max))
+        distance = np.linspace(0.000001, self.distance_max - 1, 10 * int(self.distance_max))
         cdf = self.cdf(distance, likelihood)
 
         # Make the measurement
-        return self.find_nearest(cdf, np.random.random_sample(1))
+        return distance[self.find_nearest(cdf, np.random.random_sample(1))]
 
 
     def likelihood(self, mean):
