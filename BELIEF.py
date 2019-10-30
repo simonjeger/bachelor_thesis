@@ -40,9 +40,11 @@ class belief_target_boolean:
 
                 if self.observation_log[y][x] == 1:
                     likelihood = self.my_sensor_target_boolean.likelihood(distance)
+                    likelihood = likelihood / np.sum(likelihood)
 
                 else:
                     likelihood = 1 - self.my_sensor_target_boolean.likelihood(distance)
+                    likelihood = likelihood / np.sum(likelihood)
 
                 # Prior is our current belief
                 prior = self.belief_state
@@ -158,10 +160,11 @@ class belief_target_angle:
 
                     for i_y in range(self.size_world[1]):
                         for i_x in range(self.size_world[0]):
-                            angle_abs = np.arctan2(i_x - self.position_log_estimate[y][x][0],i_y - self.position_log_estimate[y][x][1])
-                            angle[i_y][i_x] = np.min([abs(angle_abs - measurement), abs(angle_abs - measurement - 2*np.pi), abs(angle_abs - measurement + 2*np.pi)])
+                            angle_abs = np.arctan2(i_y - self.position_log_estimate[y][x][1], i_x - self.position_log_estimate[y][x][0])
+                            angle[i_y][i_x] = np.min([abs(angle_abs - measurement), abs(angle_abs - measurement - 2 * np.pi), abs(angle_abs - measurement + 2 * np.pi)])
 
                     likelihood_boolean = self.my_sensor_target_angle.likelihood(distance)
+
                     likelihood_angle = self.my_sensor_target_angle.likelihood_angle(angle)
 
                     likelihood = likelihood_boolean * likelihood_angle
@@ -169,6 +172,7 @@ class belief_target_angle:
 
                 else:
                     likelihood = 1 - self.my_sensor_target_angle.likelihood(distance)
+                    likelihood = likelihood / np.sum(likelihood)
 
                 # Prior is our current belief
                 prior = self.belief_state
@@ -262,12 +266,12 @@ class belief_position:
     def initialize_neighbour(self, id_robot, belief_state):
         dx = belief_state[0][0] - self.position_robot_estimate[self.id_robot][0]
         dy = belief_state[1][0] - self.position_robot_estimate[self.id_robot][1]
-        self.mean_phi = np.arctan2(dy, dx)
-        self.mean_r = np.sqrt(dx ** 2 + dy ** 2)
-        self.std_phi = belief_state[0][1] / self.mean_r
-        self.std_r = belief_state[0][1]
+        mean_phi = np.arctan2(dy, dx)
+        mean_r = np.sqrt(dx ** 2 + dy ** 2)
+        std_phi = belief_state[0][1] / mean_r
+        std_r = belief_state[0][1]
 
-        self.belief_state[id_robot] = [[self.mean_phi, self.std_phi], [self.mean_r, self.std_r]]
+        self.belief_state[id_robot] = [[mean_phi, std_phi], [mean_r, std_r]]
 
 
     def update_robot(self, angle_step_distance):
@@ -294,21 +298,34 @@ class belief_position:
 
                 # Make measurement (needed for the following process)
                 measurement = self.my_sensor_distance.sense(x)
-                likelihood_r = self.my_sensor_distance.likelihood(measurement)
+                if measurement != 'no_measurement':
+                    likelihood_r = self.my_sensor_distance.likelihood(measurement)
 
                 # Make uncertanty grow because the neighbour moves
                 prior_phi = self.belief_state[x][0]
                 prior_r = self.belief_state[x][1]
 
-                velocity_vector_phi = [prior_phi[0], self.my_sensor_motion.std_move / measurement]
+                if measurement != 'no_measurement':
+                    velocity_vector_phi = [prior_phi[0], self.my_sensor_motion.std_move / measurement]
+                else:
+                    velocity_vector_phi = [prior_phi[0], self.my_sensor_motion.std_move / prior_r[0]]
+
                 velocity_vector_r = [prior_r[0], self.my_sensor_motion.std_move]
 
                 new_prior_phi = [prior_phi[0], np.sqrt(prior_phi[1] ** 2 + velocity_vector_phi[1] ** 2)]
+
                 new_prior_r = [prior_r[0], np.sqrt(prior_r[1] ** 2 + velocity_vector_r[1] ** 2)]
 
+                self.belief_state[x][0] = new_prior_phi
+                self.belief_state[x][1] = new_prior_r
+
                 # Make measurement update
-                new_mean_r = (new_prior_r[0] * likelihood_r[1] ** 2 + likelihood_r[0] * new_prior_r[1] ** 2) / (new_prior_r[1] ** 2 + likelihood_r[1] ** 2)
-                new_std_r = np.sqrt((new_prior_r[1] ** 2 * likelihood_r[1] ** 2) / (new_prior_r[1] ** 2 + likelihood_r[1] ** 2))
+                if measurement != 'no_measurement':
+                    new_mean_r = (new_prior_r[0] * likelihood_r[1] ** 2 + likelihood_r[0] * new_prior_r[1] ** 2) / (new_prior_r[1] ** 2 + likelihood_r[1] ** 2)
+                    new_std_r = np.sqrt((new_prior_r[1] ** 2 * likelihood_r[1] ** 2) / (new_prior_r[1] ** 2 + likelihood_r[1] ** 2))
+                else:
+                    new_mean_r = new_prior_r[0]
+                    new_std_r = new_prior_r[1]
 
                 posterior_phi = new_prior_phi
                 posterior_r = [new_mean_r, new_std_r]
@@ -316,7 +333,7 @@ class belief_position:
                 # Increase uncertainty because my position where I observe from, is uncertain as well
                 posterior_phi[1] = np.sqrt(posterior_phi[1] ** 2 + (self.belief_state[self.id_robot][0][1] / posterior_r[0]) ** 2)
                 posterior_r[1] = np.sqrt(posterior_r[1] ** 2 + self.belief_state[self.id_robot][0][1] ** 2)
-                
+
                 self.belief_state[x][0] = posterior_phi
                 self.belief_state[x][1] = posterior_r
 
@@ -331,12 +348,13 @@ class belief_position:
         dy_now = dy_before - dy_trans
 
         # Unnormalize the std (makes it independent of old mean_r)
-        self.std_phi = self.std_phi * self.mean_r
+        std_phi = self.belief_state[id_robot][0][1] * self.belief_state[id_robot][1][0]
 
-        self.mean_phi = np.arctan2(dy_now, dx_now)
-        self.mean_r = np.sqrt(dx_now ** 2 + dy_now ** 2)
+        mean_phi = np.arctan2(dy_now, dx_now)
+        mean_r = np.sqrt(dx_now ** 2 + dy_now ** 2)
 
         # Normalize the std (makes it dependent of new mean_r)
-        self.std_phi = self.std_phi / self.mean_r
+        std_phi = std_phi / mean_r
+        std_r = self.belief_state[id_robot][1][1]
 
-        self.belief_state[id_robot] = [[self.mean_phi, self.std_phi],[self.mean_r, self.std_r]]
+        self.belief_state[id_robot] = [[mean_phi, std_phi],[mean_r, std_r]]

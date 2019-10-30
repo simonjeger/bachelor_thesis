@@ -65,19 +65,20 @@ class sensor_target_angle:
         self.inclination = 30
         self.max_pos = 0.8
         self.max_neg = 0.005
-        self.std_angle = 1
+        self.std_angle = 3
 
 
     def sense(self, position_observe):
         # Depending on the distance from the observed position to the sensor give back true or false
         distance = np.sqrt((self.position_target[0] - position_observe[0]) ** 2 + (self.position_target[1] - position_observe[1]) ** 2)
         angle = np.arctan2(self.position_target[1] - position_observe[1], self.position_target[0] - position_observe[0])
-        distance_cdf = np.linspace(- 5 * np.pi, 5 * np.pi, 100)
+        distance_cdf = np.linspace(- 2 * np.pi, 2 * np.pi, 1000)
 
         if np.random.random_sample(1) < self.likelihood(distance):
-            cdf_angle = self.cdf_angle(angle, distance_cdf, distance)
+            angle_cdf = self.angle_cdf(angle, distance_cdf, distance)
+            measurement =  distance_cdf[self.find_nearest(angle_cdf, np.random.random_sample(1))]
+            return measurement
 
-            return distance_cdf[self.find_nearest(cdf_angle, np.random.random_sample(1))]
         else:
             return 'no_measurement'
 
@@ -86,12 +87,14 @@ class sensor_target_angle:
 
     def likelihood_angle(self, angle_relativ):
         # std is independent of distance
-        normal_distr = 1 / np.sqrt(2 * np.pi * self.std_angle ** 2) * np.exp(- np.square(angle_relativ) / (2 * self.std_angle ** 2))
+        std = self.std_angle / self.cross_over
+        normal_distr = 1 / np.sqrt(2 * np.pi * std ** 2) * np.exp(- np.square(angle_relativ) / (2 * std ** 2))
         return normal_distr
 
-    def cdf_angle(self, angle, x, distance):
+    def angle_cdf(self, angle, x, distance):
         # std gets normed by the distance
-        std = self.std_angle / distance
+        #std = self.std_angle / distance + 0.0001 # To avoid dividing by zero
+        std = self.std_angle / distance + 0.0001 # To avoid dividing by zero
         cdf = 1 / 2 * (1 + erf((np.subtract(x, angle) / (std * np.sqrt(2)))))
         return cdf
 
@@ -204,9 +207,10 @@ class sensor_motion:
 
 class sensor_distance:
 
-    def __init__(self, path, size_world, id_robot, position_robot_exact):
+    def __init__(self, path, size_world, communication_range_neighbour, id_robot, position_robot_exact):
         self.path = path
         self.size_world = size_world
+        self.communication_range_neighbour = communication_range_neighbour
         self.id_robot = id_robot
         self.position_robot_exact = position_robot_exact
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
@@ -219,7 +223,12 @@ class sensor_distance:
         cdf = self.cdf(distance, likelihood)
 
         # Make the measurement
-        return distance[self.find_nearest(cdf, np.random.random_sample(1))]
+        measurement = distance[self.find_nearest(cdf, np.random.random_sample(1))]
+
+        if measurement < self.communication_range_neighbour:
+            return measurement
+        else:
+            return 'no_measurement'
 
 
     def likelihood(self, mean):

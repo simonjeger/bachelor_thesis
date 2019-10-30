@@ -216,11 +216,11 @@ class simulation:
 
 
 # Initialize a simulation
-my_simulation = simulation('test',[100,100],[[0,0], [0,99], [99,99]])
+my_simulation = simulation('test',[100,100],[[0,0], [99,99]])
 for i in range(10):
     # Everytime I set a new random position for the target
-    #my_simulation.run([np.random.randint(100), np.random.randint(100)])
-    my_simulation.run([30, 30])
+    my_simulation.run([np.random.randint(100), np.random.randint(100)])
+
     # Get information of performance over the total of all my simulations
     my_simulation.performance_target_position()
     my_simulation.performance_time()
