@@ -163,6 +163,7 @@ class belief_target_angle:
                             angle_abs = np.arctan2(i_y - self.position_log_estimate[y][x][1], i_x - self.position_log_estimate[y][x][0])
                             angle[i_y][i_x] = np.min([abs(angle_abs - measurement), abs(angle_abs - measurement - 2 * np.pi), abs(angle_abs - measurement + 2 * np.pi)])
 
+
                     likelihood_boolean = self.my_sensor_target_angle.likelihood(distance)
 
                     likelihood_angle = self.my_sensor_target_angle.likelihood_angle(angle)

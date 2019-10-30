@@ -127,12 +127,23 @@ class sensor_motion:
     def __init__(self, path, size_world, step_distance):
         self.path = path
         self.size_world = size_world
+        self.step_distance = step_distance
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
         self.std_v = 0.5
-        self.std_move = step_distance / (erfinv(0.4) * np.sqrt(2)) # Probability = 0.95
+        self.std_move = self.gaussian_approx()
 
+    def gaussian_approx(self):
+        m = [- self.step_distance, 0, self.step_distance]
+        s = [self.std_v, self.std_v, self.std_v]
+        p = self.gaussian(m, [m, s])
+        p_n = p / np.sum(p)
+
+        m_new = p_n.dot(m)
+        s_new = np.sqrt(p_n.dot(np.power(s, 2) + np.power(m, 2)) - np.power(p_n.dot(m), 2))
+
+        return s_new
 
     def sense(self, angle_step_distance):
         # My measurement will be a bit off the true x and y position
@@ -183,7 +194,7 @@ class sensor_motion:
     def gaussian(self, x, mean_std):
         mean = mean_std[0]
         std = mean_std[1]
-        normal_distr = 1 / np.sqrt(2 * np.pi * std ** 2) * np.exp(- np.square(np.subtract(x, mean)) / (2 * std ** 2))
+        normal_distr = 1 / np.sqrt(2 * np.pi * np.power(std, 2)) * np.exp(- np.square(np.subtract(x, mean)) / (2 * np.power(std, 2)))
         return normal_distr
 
 
