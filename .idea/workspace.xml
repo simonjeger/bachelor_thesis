@@ -71,7 +71,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="scratch (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="scratch_11" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="bachelor_thesis" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -84,7 +84,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch.py" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/resolution.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -140,10 +140,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.SIMULATION" />
+        <item itemvalue="Python.scratch_11" />
         <item itemvalue="Python.scratch_9" />
         <item itemvalue="Python.SENSOR" />
         <item itemvalue="Python.scratch_8" />
-        <item itemvalue="Python.scratch (1)" />
       </list>
     </recent_temporary>
   </component>
@@ -152,8 +152,9 @@
     <SUITE FILE_PATH="coverage/bachelor_thesis$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1571746664915" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/bachelor_thesis$SIMULATION__1_.coverage" NAME="SIMULATION (1) Coverage Results" MODIFIED="1571750985506" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../2D" />
     <SUITE FILE_PATH="coverage/bachelor_thesis$scratch__1_.coverage" NAME="scratch (1) Coverage Results" MODIFIED="1572248457019" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
+    <SUITE FILE_PATH="coverage/bachelor_thesis$scratch_11.coverage" NAME="scratch_11 Coverage Results" MODIFIED="1572519485474" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/bachelor_thesis$scratch_8.coverage" NAME="scratch_8 Coverage Results" MODIFIED="1572463832249" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/bachelor_thesis$SENSOR.coverage" NAME="SENSOR Coverage Results" MODIFIED="1572466517231" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/bachelor_thesis$SIMULATION.coverage" NAME="SIMULATION Coverage Results" MODIFIED="1572466575799" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/bachelor_thesis$SIMULATION.coverage" NAME="SIMULATION Coverage Results" MODIFIED="1572529478196" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

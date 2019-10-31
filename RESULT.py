@@ -7,16 +7,18 @@ import os
 
 class result:
 
-    def __init__(self, path, name_of_simulation, size_world, position_target, my_robot):
+    def __init__(self, path, name_of_simulation, size_world, size_world_real, position_target, my_robot):
         self.path = path
         self.name_of_simulation = name_of_simulation
         self.size_world = size_world
+        self.size_world_real = size_world_real
+        self.scaling = size_world[0] / size_world_real[0]
         self.position_target = position_target
         self.my_robot = my_robot
         self.picture_id = 0
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
-        self.size_point = 1 / 95 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 1.5
+        self.size_point = 1 / 95 * np.sqrt(self.size_world_real[0]**2 + self.size_world_real[1]**2) # circa 1.5
 
         # Generate new folder
         os.mkdir(self.path + '/construction')
@@ -81,9 +83,9 @@ class result:
                     my_belief_position[y] = self.build_rphi(self.my_robot[x].position_robot_estimate[x], self.my_robot[x].my_belief_position.belief_state[y])
 
             # Belief_state_target
-            ax[x, 0].imshow(self.my_robot[x].my_belief_target.belief_state)
-            pos = patches.Circle(self.my_robot[x].position_robot_estimate[x], radius=self.size_point, color=color_robot, fill=True)
-            tar = patches.Circle(self.position_target, radius=self.size_point, color=color_target, fill=True)
+            ax[x, 0].imshow(self.my_robot[x].my_belief_target.belief_state, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
+            pos = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point, color=color_robot, fill=True)
+            tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=True)
             ax[x, 0].add_patch(pos)
             ax[x, 0].add_patch(tar)
             ax[x, 0].set_title('Belief of robot ' + str(x) + ' about target')
@@ -92,20 +94,19 @@ class result:
             for y in range(len(self.my_robot[x].position_robot_estimate)):
                 contact = self.my_robot[x].id_contact[y][0]
                 if (contact == 1) & (x != y):
-                    nei_x = self.my_robot[x].position_robot_estimate[x][0] + self.my_robot[x].my_belief_position.belief_state[y][1][0] * np.cos(self.my_robot[x].my_belief_position.belief_state[y][0][0])
-                    nei_y = self.my_robot[x].position_robot_estimate[x][1] + self.my_robot[x].my_belief_position.belief_state[y][1][0] * np.sin(self.my_robot[x].my_belief_position.belief_state[y][0][0])
-                    lin = patches.ConnectionPatch(self.my_robot[x].position_robot_estimate[x],[nei_x, nei_y], "data", color=color_neighbour)
+                    nei_x = (self.my_robot[x].position_robot_estimate[x][0] + self.my_robot[x].my_belief_position.belief_state[y][1][0] * np.cos(self.my_robot[x].my_belief_position.belief_state[y][0][0]))/self.scaling
+                    nei_y = (self.my_robot[x].position_robot_estimate[x][1] + self.my_robot[x].my_belief_position.belief_state[y][1][0] * np.sin(self.my_robot[x].my_belief_position.belief_state[y][0][0]))/self.scaling
+                    lin = patches.ConnectionPatch(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), [nei_x, nei_y], "data", color=color_neighbour)
                     nei = patches.Circle([nei_x, nei_y], radius=self.size_point, color=color_neighbour, fill=True)
                     ax[x, 0].add_patch(lin)
                     ax[x, 0].add_patch(nei)
 
             # Belief_state_position
             for y in range(len(self.my_robot[x].position_robot_estimate)):
-                ax[x, y + 1].imshow(my_belief_position[y])
-                #ax[x, y + 1].imshow(self.my_robot[x].my_belief_position_cheap.belief_state[y])
-                nei = patches.Circle((self.my_robot[x].position_robot_exact[y]), radius=self.size_point, color=color_neighbour, fill=True)
-                nei_b = patches.Circle((self.my_robot[x].position_robot_exact[y]), radius=self.size_point / 5, color='black', fill=True)
-                pos = patches.Circle((self.my_robot[x].position_robot_estimate[x]), radius=self.size_point, color=color_robot, fill=True)
+                ax[x, y + 1].imshow(my_belief_position[y], extent=[0,self.size_world_real[0],self.size_world_real[1],0])
+                nei = patches.Circle((np.divide(self.my_robot[x].position_robot_exact[y], self.scaling)), radius=self.size_point, color=color_neighbour, fill=True)
+                nei_b = patches.Circle((np.divide(self.my_robot[x].position_robot_exact[y], self.scaling)), radius=self.size_point / 5, color='black', fill=True)
+                pos = patches.Circle((np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling)), radius=self.size_point, color=color_robot, fill=True)
                 ax[x, y + 1].add_patch(nei)
                 ax[x, y + 1].add_patch(nei_b)
                 ax[x, y + 1].add_patch(pos)

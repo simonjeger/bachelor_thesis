@@ -6,17 +6,19 @@ import matplotlib.pyplot as plt
 
 class sensor_target_boolean:
 
-    def __init__(self, path, size_world, position_target):
+    def __init__(self, path, size_world, size_world_real, position_target):
         self.path = path
         self.position_target = position_target
         self.size_world = size_world
+        self.size_world_real = size_world_real
+        self.scaling = size_world[0] / size_world_real[0]
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
-        self.cross_over = 1 / 14 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 10
-        self.width = 1 / 1250 * np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)  # circa 0.11
-        self.inclination = 30
-        self.max_pos = 0.8
+        self.cross_over = 1730 * self.scaling
+        self.width = 0.1
+        self.smoothness = 50
+        self.max_pos = 0.9
         self.max_neg = 0.005
 
 
@@ -38,9 +40,9 @@ class sensor_target_boolean:
         y = self.likelihood(x)
 
         # Plot sensor model
-        plt.plot(x, y)
+        plt.plot(x / self.scaling, y)
         plt.xlabel('Distance to target')
-        plt.xlim((0, self.distance_max))
+        plt.xlim((0, self.distance_max / self.scaling))
         plt.ylabel('Likelihood')
         plt.ylim((0, 1))
         plt.title('sensor_target')
@@ -53,17 +55,19 @@ class sensor_target_boolean:
 
 class sensor_target_angle:
 
-    def __init__(self, path, size_world, position_target):
+    def __init__(self, path, size_world, size_world_real, position_target):
         self.path = path
         self.position_target = position_target
         self.size_world = size_world
+        self.size_world_real = size_world_real
+        self.scaling = size_world[0] / size_world_real[0]
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
-        self.cross_over = 1 / 14 * np.sqrt(self.size_world[0]**2 + self.size_world[1]**2) # circa 10
-        self.width = 1 / 1250 * np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)  # circa 0.11
-        self.inclination = 30
-        self.max_pos = 0.8
+        self.cross_over = 1730 * self.scaling
+        self.width = 0.1
+        self.smoothness = 50
+        self.max_pos = 0.9
         self.max_neg = 0.005
         self.std_angle = 3
 
@@ -83,7 +87,7 @@ class sensor_target_angle:
             return 'no_measurement'
 
     def likelihood(self, distance):
-        return self.max_pos - (self.max_pos - self.max_neg) * 1 / 2 * (1 + erf((np.multiply(1 / self.width, np.subtract(distance, self.cross_over))) / (self.inclination * np.sqrt(2))))
+        return self.max_pos - (self.max_pos - self.max_neg) * 1 / 2 * (1 + erf((np.multiply(1 / self.width, np.subtract(distance, self.cross_over))) / (self.smoothness * np.sqrt(2))))
 
     def likelihood_angle(self, angle_relativ):
         # std is independent of distance
@@ -109,9 +113,9 @@ class sensor_target_angle:
         y = self.likelihood(x)
 
         # Plot sensor model
-        plt.plot(x, y)
+        plt.plot(x / self.scaling, y)
         plt.xlabel('Distance to target')
-        plt.xlim((0, self.distance_max))
+        plt.xlim((0, self.distance_max / self.scaling))
         plt.ylabel('Likelihood')
         plt.ylim((0, 1))
         plt.title('sensor_target')
@@ -124,9 +128,11 @@ class sensor_target_angle:
 
 class sensor_motion:
 
-    def __init__(self, path, size_world, step_distance):
+    def __init__(self, path, size_world, size_world_real, step_distance):
         self.path = path
         self.size_world = size_world
+        self.size_world_real = size_world_real
+        self.scaling = size_world[0] / size_world_real[0]
         self.step_distance = step_distance
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
@@ -200,13 +206,13 @@ class sensor_motion:
 
     def picture_save(self):
         # Initalize both axis
-        x = np.linspace(0, self.distance_max - 1, int(self.distance_max))
-        y = self.gaussian(x, self.likelihood_x([0, 5]))
+        x = np.linspace(0, 5 * self.step_distance, int(5 * self.distance_max))
+        y = self.gaussian(x, self.likelihood_x([0, self.step_distance]))
 
         # Plot sensor model
         plt.plot(x, y)
         plt.xlabel('Change in position in e_x')
-        plt.xlim((0, self.distance_max))
+        plt.xlim((0, 5 * self.step_distance))
         plt.ylabel('Likelihood')
         plt.ylim((0, 1))
         plt.title('sensor_motion')
@@ -218,9 +224,11 @@ class sensor_motion:
 
 class sensor_distance:
 
-    def __init__(self, path, size_world, communication_range_neighbour, id_robot, position_robot_exact):
+    def __init__(self, path, size_world, size_world_real, communication_range_neighbour, id_robot, position_robot_exact):
         self.path = path
         self.size_world = size_world
+        self.size_world_real = size_world_real
+        self.scaling = size_world[0] / size_world_real[0]
         self.communication_range_neighbour = communication_range_neighbour
         self.id_robot = id_robot
         self.position_robot_exact = position_robot_exact
@@ -248,7 +256,7 @@ class sensor_distance:
 
 
     def standard_deviation(self, mean):
-        return 1 + mean * 5 / np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)  # circa mean / 30
+        return 1 + mean * 5 * self.scaling  # circa mean / 30
 
 
     def cdf(self, x, mean_std):
@@ -279,10 +287,10 @@ class sensor_distance:
         n = 5
         for i in range(0, n):
             y = self.gaussian(x,self.likelihood(self.distance_max * i / n))
-            plt.plot(x, y)
+            plt.plot(x / self.scaling, y)
 
         plt.xlabel('Distance between robots')
-        plt.xlim((0, self.distance_max))
+        plt.xlim((0, self.distance_max / self.scaling))
         plt.ylabel('Likelihood')
         plt.ylim((0, 1))
         plt.title('sensor_distance')

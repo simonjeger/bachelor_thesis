@@ -10,29 +10,38 @@ import RESULT
 
 class simulation:
 
-    def __init__(self, name_of_simulation, size_world, position_initial):
-        # Initialize simulation dependent parameters
-        self.name_of_simulation = name_of_simulation
-        self.path = self.name_of_simulation
-        self.size_world = size_world
-        self.position_initial = position_initial
+    def __init__(self, name_of_simulation, size_world, resolution, position_initial):
 
-        # Initialize cicle dependent parameters
-        self.performance_position_target = []
-        self.performance_number_of_iteration = []
-        self.performance_time_computation = []
-        self.performance_time_picture = []
-        self.cicle = 0
+        if resolution[0] / size_world[0] != resolution[1] / size_world[1]:
+            return 'size_world and resolution need to have the same aspect ratio'
 
-        # Make directories
-        os.mkdir(self.path)
-        os.mkdir(self.path + '/video')
-        os.mkdir(self.path + '/sensor')
-        os.mkdir(self.path + '/performance')
+        else:
+            # Initialize simulation dependent parameters
+            self.name_of_simulation = name_of_simulation
+            self.path = self.name_of_simulation
+            self.size_world = resolution
+            self.size_world_real = size_world
+            self.scaling = self.size_world[0] / self.size_world_real[0]
+            for i in range(len(position_initial)):
+                position_initial[i] = [int(position_initial[i][0] * self.scaling), int(position_initial[i][1] * self.scaling)]
+            self.position_initial = position_initial
+
+            # Initialize cicle dependent parameters
+            self.performance_position_target = []
+            self.performance_number_of_iteration = []
+            self.performance_time_computation = []
+            self.performance_time_picture = []
+            self.cicle = 0
+
+            # Make directories
+            os.mkdir(self.path)
+            os.mkdir(self.path + '/video')
+            os.mkdir(self.path + '/sensor')
+            os.mkdir(self.path + '/performance')
 
 
     def run(self, position_target):
-        self.position_target = position_target
+        self.position_target = [int(position_target[0] * self.scaling), int(position_target[1] * self.scaling)]
 
         # Initialize performance_time vector
         self.time_computation = 0
@@ -45,7 +54,7 @@ class simulation:
         self.my_robot = [0] * len(self.position_initial)
         self.my_decision = [0] * len(self.position_initial)
         for x in range(len(self.position_initial)):
-            self.my_robot[x] = ROBOT.lauv(self.path, self.size_world, self.position_target, len(self.position_initial), x, self.position_initial)
+            self.my_robot[x] = ROBOT.lauv(self.path, self.size_world, self.size_world_real, self.position_target, len(self.position_initial), x, self.position_initial)
 
         # Fill in position vectors
         for x in range(len(self.my_robot)):
@@ -60,7 +69,7 @@ class simulation:
                     self.my_robot[x].my_belief_position.initialize_neighbour(y, self.my_robot[y].my_belief_position.belief_state[y])
 
         # Initialize the common result
-        self.my_result = RESULT.result(self.path, self.name_of_simulation, self.size_world, self.position_target, self.my_robot)
+        self.my_result = RESULT.result(self.path, self.name_of_simulation, self.size_world, self.size_world_real, self.position_target, self.my_robot)
 
         # Save picture of sensor_model (from the first robot), they are all the same
         self.my_robot[0].my_sensor_target.picture_save()
@@ -187,7 +196,7 @@ class simulation:
             performance_map[self.performance_position_target[i][1]][self.performance_position_target[i][0]] = self.performance_number_of_iteration[i]
 
         # Creating visual representation of performance_map
-        plt.imshow(performance_map)
+        plt.imshow(performance_map, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
         plt.colorbar()
         plt.title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average: ' + str(np.sum(self.performance_number_of_iteration) / self.cicle))
 
@@ -216,10 +225,10 @@ class simulation:
 
 
 # Initialize a simulation
-my_simulation = simulation('test',[100,100],[[0,0], [99,99]])
+my_simulation = simulation('test',[20000,20000], [100,100], [[0,0], [19999,19999]])
 for i in range(10):
     # Everytime I set a new random position for the target
-    my_simulation.run([np.random.randint(100), np.random.randint(100)])
+    my_simulation.run([np.random.randint(20000), np.random.randint(20000)])
 
     # Get information of performance over the total of all my simulations
     my_simulation.performance_target_position()
