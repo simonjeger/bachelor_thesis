@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import erf
-from scipy.special import erfinv
 import matplotlib.pyplot as plt
 
 
@@ -15,9 +14,9 @@ class sensor_target_boolean:
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
-        self.cross_over = 1730 * self.scaling
-        self.width = 0.1
-        self.smoothness = 50
+        self.cross_over = 3500 * self.scaling
+        self.width = 0.5
+        self.smoothness = 10
         self.max_pos = 0.9
         self.max_neg = 0.005
 
@@ -64,9 +63,9 @@ class sensor_target_angle:
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
-        self.cross_over = 1730 * self.scaling
-        self.width = 0.1
-        self.smoothness = 50
+        self.cross_over = 3500 * self.scaling
+        self.width = 150 * self.scaling
+        self.smoothness = 5
         self.max_pos = 0.9
         self.max_neg = 0.005
         self.std_angle = 3
@@ -97,8 +96,8 @@ class sensor_target_angle:
 
     def angle_cdf(self, angle, x, distance):
         # std gets normed by the distance
-        #std = self.std_angle / distance + 0.0001 # To avoid dividing by zero
-        std = self.std_angle / distance + 0.0001 # To avoid dividing by zero
+        #std = (self.std_angle / distance + 0.0001) / (self.likelihood(distance)) # To avoid dividing by zero
+        std = (self.std_angle / distance + 0.0001) # To avoid dividing by zero
         cdf = 1 / 2 * (1 + erf((np.subtract(x, angle) / (std * np.sqrt(2)))))
         return cdf
 
@@ -137,7 +136,7 @@ class sensor_motion:
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
-        self.std_v = 0.5
+        self.std_v = 0.001 * self.step_distance
         self.std_move = self.gaussian_approx()
 
     def gaussian_approx(self):
@@ -153,8 +152,8 @@ class sensor_motion:
 
     def sense(self, angle_step_distance):
         # My measurement will be a bit off the true x and y position
-        distance_x = np.linspace(- np.max(self.size_world), np.max(self.size_world) - 1, 100 * np.max(self.size_world))
-        distance_y = np.linspace(- np.max(self.size_world), np.max(self.size_world) - 1, 100 * np.max(self.size_world))
+        distance_x = np.linspace(- 5 * self.step_distance, 5 * self.step_distance, 100 / self.std_v)
+        distance_y = np.linspace(- 5 * self.step_distance, 5 * self.step_distance, 100 / self.std_v)
 
         likelihood_x = self.likelihood_x(angle_step_distance)
         likelihood_y = self.likelihood_y(angle_step_distance)
@@ -256,7 +255,7 @@ class sensor_distance:
 
 
     def standard_deviation(self, mean):
-        return 1 + mean * 5 * self.scaling  # circa mean / 30
+        return 1 + mean * 5 * self.scaling
 
 
     def cdf(self, x, mean_std):

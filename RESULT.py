@@ -18,7 +18,7 @@ class result:
         self.picture_id = 0
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
-        self.size_point = 1 / 95 * np.sqrt(self.size_world_real[0]**2 + self.size_world_real[1]**2) # circa 1.5
+        self.size_point = 1 / 150 * np.sqrt(self.size_world_real[0]**2 + self.size_world_real[1]**2) # circa 0.943
 
         # Generate new folder
         os.mkdir(self.path + '/construction')

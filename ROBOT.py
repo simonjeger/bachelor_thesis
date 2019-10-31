@@ -24,7 +24,7 @@ class lauv:
 
         # Initialize parameters for motion of robot
         #self.step_distance = 1.4 * self.scaling
-        self.step_distance = 300 * self.scaling
+        self.step_distance = 2000 * self.scaling
         self.number_of_directions = 8
         self.path_depth = 1
         self.communication_range_observation = 5000 * self.scaling

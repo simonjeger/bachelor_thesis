@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 class belief_target_boolean:
@@ -258,9 +257,9 @@ class belief_position:
 
         # Parameters for belief_position_me
         self.mean_x = self.position_robot_estimate[self.id_robot][0]
-        self.std_x = 2
+        self.std_x = 1
         self.mean_y = self.position_robot_estimate[self.id_robot][1]
-        self.std_y = 2
+        self.std_y = 1
 
         self.belief_state[self.id_robot] = [[self.mean_x, self.std_x], [self.mean_y, self.std_y]]
 
