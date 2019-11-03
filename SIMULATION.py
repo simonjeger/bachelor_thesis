@@ -4,7 +4,7 @@ import copy
 import os
 import time
 
-import ROBOT
+import AGENT
 import RESULT
 
 
@@ -54,7 +54,10 @@ class simulation:
         self.my_robot = [0] * len(self.position_initial)
         self.my_decision = [0] * len(self.position_initial)
         for x in range(len(self.position_initial)):
-            self.my_robot[x] = ROBOT.lauv(self.path, self.size_world, self.size_world_real, self.position_target, len(self.position_initial), x, self.position_initial)
+            self.my_robot[x] = AGENT.auv(self.path, self.size_world, self.size_world_real, self.position_target, len(self.position_initial), x, self.position_initial)
+
+        # Initialize the homebase
+        self.my_homebase = AGENT.homebase(self.path, self.size_world, self.size_world_real, self.position_target, len(self.position_initial), self.position_initial)
 
         # Fill in position vectors
         for x in range(len(self.my_robot)):
@@ -69,7 +72,7 @@ class simulation:
                     self.my_robot[x].my_belief_position.initialize_neighbour(y, self.my_robot[y].my_belief_position.belief_state[y])
 
         # Initialize the common result
-        self.my_result = RESULT.result(self.path, self.name_of_simulation, self.size_world, self.size_world_real, self.position_target, self.my_robot)
+        self.my_result = RESULT.result(self.path, self.name_of_simulation, self.size_world, self.size_world_real, self.position_target, self.my_robot, self.my_homebase)
 
         # Save picture of sensor_model (from the first robot), they are all the same
         self.my_robot[0].my_sensor_target.picture_save()
@@ -132,6 +135,9 @@ class simulation:
                 # Update belief_target
                 self.my_robot[x].my_belief_target.update(self.my_robot[x].position_robot_estimate[x])
 
+            # Update homebase_belief_state
+            self.my_homebase.my_belief_position.update()
+
             # Exchange belief if close enough
             distance_estimate = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
             distance_exact = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
@@ -142,11 +148,11 @@ class simulation:
                     # I don't have to look how far away I am from myself
                     if (x != y):
 
-                        # Do I think we are close enough, does my neighbour think that too & are we actually close enough?
+                        # Do I think we are close enough, does my neighbour think that too & are we actually close enough & isn't he rising to the surface?
                         distance_estimate[x][y] = self.my_robot[x].my_belief_position.belief_state[y][1][0]
                         distance_exact[x][y] = np.sqrt((self.my_robot[x].position_robot_exact[x][0] - self.my_robot[x].position_robot_exact[y][0]) ** 2 + (self.my_robot[x].position_robot_exact[x][1] - self.my_robot[x].position_robot_exact[y][1]) ** 2)
 
-                        if (distance_estimate[x][y] < self.my_robot[x].communication_range_observation) & (distance_exact[x][y] < self.my_robot[x].communication_range_observation):
+                        if (distance_estimate[x][y] < self.my_robot[x].communication_range_observation) & (distance_exact[x][y] < self.my_robot[x].communication_range_observation) & (self.my_robot[y].id_contact[-1][0] == 0):
                             self.my_robot[x].id_contact[y][0] = 1
                             self.my_robot[y].id_contact[x][1] = 1
 
@@ -162,6 +168,33 @@ class simulation:
                         else:
                             self.my_robot[x].id_contact[y][0] = 0
                             self.my_robot[y].id_contact[x][1] = 0
+
+            for x in range(len(self.my_robot)):
+                if self.my_robot[x].id_contact[-1][0] == self.my_robot[x].my_decision.diving_depth:
+                    for z in range(len(self.my_robot)):
+
+                        # Reset all connections
+                        if x != z:
+                            self.my_robot[x].id_contact[z][0] = 0
+                            self.my_robot[z].id_contact[x][1] = 0
+
+                        # Update homebase about target
+                        if len(self.my_homebase.my_belief_target.position_log_estimate[z]) < len(self.my_robot[x].my_belief_target.position_log_estimate[z]):
+                            self.my_homebase.my_belief_target.merge(z, self.my_robot[x].my_belief_target.position_log_estimate[z], self.my_robot[x].my_belief_target.observation_log[z])
+
+                        # Update homebase about position
+                        self.my_robot[x].my_belief_position.surface()
+                        self.my_robot[x].update_estimate_robot()
+                        self.my_homebase.my_belief_position.belief_state[x] = copy.deepcopy(self.my_robot[x].my_belief_position.belief_state[x])
+
+            for x in range(len(self.my_robot)):
+                if self.my_robot[x].id_contact[-1][0] == self.my_robot[x].my_decision.diving_depth:
+                    for z in range(len(self.my_robot)):
+
+                        # Update robots about target
+                        if len(self.my_robot[x].my_belief_target.position_log_estimate[z]) < len(self.my_homebase.my_belief_target.position_log_estimate[z]):
+                            self.my_robot[x].my_belief_target.merge(z, self.my_homebase.my_belief_target.position_log_estimate[z], self.my_homebase.my_belief_target.observation_log[z])
+
 
             # How long it takes to compute everything
             self.time_computation = self.time_computation + (time.time() - self.time_start)
@@ -225,7 +258,7 @@ class simulation:
 
 
 # Initialize a simulation
-my_simulation = simulation('test',[50000,50000], [70,70], [[0,0], [0,49999], [49999,0], [49999,49999]])
+my_simulation = simulation('test',[50000,50000], [80,80], [[0,0], [49999,49999]])
 for i in range(10):
     # Everytime I set a new random position for the target
     my_simulation.run([np.random.randint(50000), np.random.randint(50000)])

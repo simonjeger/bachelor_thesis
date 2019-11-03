@@ -7,7 +7,7 @@ import os
 
 class result:
 
-    def __init__(self, path, name_of_simulation, size_world, size_world_real, position_target, my_robot):
+    def __init__(self, path, name_of_simulation, size_world, size_world_real, position_target, my_robot, my_homebase):
         self.path = path
         self.name_of_simulation = name_of_simulation
         self.size_world = size_world
@@ -15,6 +15,7 @@ class result:
         self.scaling = size_world[0] / size_world_real[0]
         self.position_target = position_target
         self.my_robot = my_robot
+        self.my_homebase = my_homebase
         self.picture_id = 0
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
@@ -71,7 +72,7 @@ class result:
         color_target = 'black'
 
         # Save picture of each step
-        fig, (ax) = plt.subplots(len(self.my_robot), len(self.my_robot) + 1, figsize = (50 / 10 * (len(self.my_robot) + 1), 50 * len(self.my_robot) / 10))
+        fig, (ax) = plt.subplots(len(self.my_robot) + 1, len(self.my_robot) + 1, figsize = (50 / 10 * (len(self.my_robot) + 1), (50 / 10 * (len(self.my_robot) + 1))))
         for x in range(len(self.my_robot)):
 
             # Actually generating the belief_position
@@ -85,8 +86,11 @@ class result:
             # Belief_state_target
             ax[x, 0].imshow(self.my_robot[x].my_belief_target.belief_state, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
             pos = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point, color=color_robot, fill=True)
+            ris = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point * 3, color=color_robot, fill=False)
             tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=True)
             ax[x, 0].add_patch(pos)
+            if self.my_robot[x].id_contact[-1][0] != 0:
+                ax[x, 0].add_patch(ris)
             ax[x, 0].add_patch(tar)
             ax[x, 0].set_title('Belief of robot ' + str(x) + ' about target')
 
@@ -111,6 +115,22 @@ class result:
                 ax[x, y + 1].add_patch(nei_b)
                 ax[x, y + 1].add_patch(pos)
                 ax[x, y + 1].set_title('Belief of robot ' + str(x) + ' about position of robot ' + str(y))
+
+        # hb_belief_state_target
+        ax[-1, 0].imshow(self.my_homebase.my_belief_target.belief_state, extent=[0, self.size_world_real[0], self.size_world_real[1], 0])
+        tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=True)
+        ax[-1, 0].add_patch(tar)
+        ax[-1, 0].set_title('Belief of homebase about target')
+
+        # Actually generating the belief_position
+        my_hb_belief_position = [0] * len(self.my_robot)
+        for y in range(len(self.my_robot)):
+            my_hb_belief_position[y] = self.build_xy(self.my_homebase.my_belief_position.belief_state[y])
+
+        # hb_belief_state_position
+        for y in range(len(self.my_robot)):
+            ax[-1, y + 1].imshow(my_hb_belief_position[y], extent=[0, self.size_world_real[0], self.size_world_real[1], 0])
+            ax[-1, y + 1].set_title('Belief of homebase about position of robot ' + str(y))
 
         plt.savefig(self.path + '/construction/' + str(self.picture_id) + '.png')
         plt.close()

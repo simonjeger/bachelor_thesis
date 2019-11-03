@@ -136,7 +136,8 @@ class sensor_motion:
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
-        self.std_v = 0.001 * self.step_distance
+        #self.std_v = 0.001 * self.step_distance
+        self.std_v = 0.1
         self.std_move = self.gaussian_approx()
 
     def gaussian_approx(self):
