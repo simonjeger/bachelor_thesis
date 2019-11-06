@@ -4,6 +4,8 @@ import numpy as np
 class belief_target_boolean:
 
     def __init__(self, size_world, my_sensor_target, number_of_robots, id_robot, id_contact):
+
+        # Initialize
         self.size_world = size_world
         self.my_sensor_target = my_sensor_target
         self.number_of_robots = number_of_robots
@@ -121,6 +123,8 @@ class belief_target_boolean:
 class belief_target_angle:
 
     def __init__(self, size_world, my_sensor_target, number_of_robots, id_robot, id_contact):
+
+        # Initialize
         self.size_world = size_world
         self.my_sensor_target = my_sensor_target
         self.number_of_robots = number_of_robots
@@ -251,7 +255,10 @@ class belief_target_angle:
 
 class belief_position:
 
-    def __init__(self, id_robot, position_robot_exact, position_robot_estimate, my_sensor_distance, my_sensor_motion, number_of_robots):
+    def __init__(self, scaling, id_robot, position_robot_exact, position_robot_estimate, my_sensor_distance, my_sensor_motion, number_of_robots):
+
+        # Initialize
+        self.scaling = scaling
         self.id_robot = id_robot
         self.my_sensor_distance = my_sensor_distance
         self.my_sensor_motion = my_sensor_motion
@@ -262,9 +269,9 @@ class belief_position:
 
         # Parameters for belief_position_me
         self.mean_x = self.position_robot_estimate[self.id_robot][0]
-        self.std_x = 1
+        self.std_x = 100 * self.scaling
         self.mean_y = self.position_robot_estimate[self.id_robot][1]
-        self.std_y = 1
+        self.std_y = 100 * self.scaling
 
         self.belief_state[self.id_robot] = [[self.mean_x, self.std_x], [self.mean_y, self.std_y]]
 
@@ -374,6 +381,8 @@ class belief_position:
 class hb_belief_target:
 
     def __init__(self, size_world, my_sensor_target, number_of_robots):
+
+        # Initialize
         self.size_world = size_world
         self.my_sensor_target = my_sensor_target
         self.number_of_robots = number_of_robots
@@ -426,6 +435,8 @@ class hb_belief_target:
 class hb_belief_position:
 
     def __init__(self, my_sensor_motion, position_robot_exact, number_of_robots):
+
+        # Initialize
         self.my_sensor_motion = my_sensor_motion
         self.position_robot_exact = position_robot_exact
         self.number_of_robots = number_of_robots

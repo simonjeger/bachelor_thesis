@@ -84,13 +84,22 @@ class result:
 
             # Belief_state_target
             ax[x, 0].imshow(self.my_robot[x].my_belief_target.belief_state, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
+
             pos = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point, color=color_robot, fill=True)
-            ris = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point * 3, color=color_robot, fill=False)
-            tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=True)
             ax[x, 0].add_patch(pos)
+
             if self.my_robot[x].id_contact[-1][0] != 0:
+                ris = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point * 3, color=color_robot, fill=False)
                 ax[x, 0].add_patch(ris)
+
+            pas = []
+            for i in range(len(self.my_robot[x].my_belief_target.position_log_estimate[x])):
+                pas = pas + [patches.Circle(np.divide(self.my_robot[x].my_belief_target.position_log_estimate[x][i], self.scaling), radius=self.size_point / 5, color=color_robot, fill=True)]
+                ax[x, 0].add_patch(pas[i])
+
+            tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=True)
             ax[x, 0].add_patch(tar)
+
             ax[x, 0].set_title('Belief of robot ' + str(x) + ' about target')
 
             # Make connecting line when contact between robots
@@ -99,26 +108,33 @@ class result:
                 if (contact == 1) & (x != y):
                     nei_x = (self.my_robot[x].position_robot_estimate[x][0] + self.my_robot[x].my_belief_position.belief_state[y][1][0] * np.cos(self.my_robot[x].my_belief_position.belief_state[y][0][0]))/self.scaling
                     nei_y = (self.my_robot[x].position_robot_estimate[x][1] + self.my_robot[x].my_belief_position.belief_state[y][1][0] * np.sin(self.my_robot[x].my_belief_position.belief_state[y][0][0]))/self.scaling
+
                     lin = patches.ConnectionPatch(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), [nei_x, nei_y], "data", color=color_neighbour)
-                    nei = patches.Circle([nei_x, nei_y], radius=self.size_point, color=color_neighbour, fill=True)
                     ax[x, 0].add_patch(lin)
+
+                    nei = patches.Circle([nei_x, nei_y], radius=self.size_point, color=color_neighbour, fill=True)
                     ax[x, 0].add_patch(nei)
 
             # Belief_state_position
             for y in range(len(self.my_robot[x].position_robot_estimate)):
                 ax[x, y + 1].imshow(my_belief_position[y], extent=[0,self.size_world_real[0],self.size_world_real[1],0])
                 nei = patches.Circle((np.divide(self.my_robot[x].position_robot_exact[y], self.scaling)), radius=self.size_point, color=color_neighbour, fill=True)
-                nei_b = patches.Circle((np.divide(self.my_robot[x].position_robot_exact[y], self.scaling)), radius=self.size_point / 5, color='black', fill=True)
-                pos = patches.Circle((np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling)), radius=self.size_point, color=color_robot, fill=True)
                 ax[x, y + 1].add_patch(nei)
+
+                nei_b = patches.Circle((np.divide(self.my_robot[x].position_robot_exact[y], self.scaling)), radius=self.size_point / 5, color='black', fill=True)
                 ax[x, y + 1].add_patch(nei_b)
+
+                pos = patches.Circle((np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling)), radius=self.size_point, color=color_robot, fill=True)
                 ax[x, y + 1].add_patch(pos)
+
                 ax[x, y + 1].set_title('Belief of robot ' + str(x) + ' about position of robot ' + str(y))
 
         # hb_belief_state_target
         ax[-1, 0].imshow(self.my_homebase.my_belief_target.belief_state, extent=[0, self.size_world_real[0], self.size_world_real[1], 0])
+
         tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=True)
         ax[-1, 0].add_patch(tar)
+
         ax[-1, 0].set_title('Belief of homebase about target')
 
         # Actually generating the belief_position

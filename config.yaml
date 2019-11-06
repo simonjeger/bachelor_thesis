@@ -1,0 +1,35 @@
+# parameter_simulation
+name_of_simulation: 'test'
+size_world: [50000, 50000]
+resolution: [400, 400]
+position_initial: [[0, 0], [0, 50000], [50000, 0]]
+position_target: [45000, 20000]
+max_belief: 1300
+max_runtime: 100
+
+# parameter_robot
+step_distance: 1000
+number_of_directions: 8
+path_depth: 1
+communication_range_observation: 5000
+communication_range_neighbour: 9500
+choice_sensor_target: 'angle'
+
+# parameter_sensor_target
+cross_over: 3500
+width: 150
+smoothness: 5
+max_pos: 0.9
+#max_neg: 0.005
+max_neg: 0.000001
+std_angle: 3
+
+# parameter_sensor_motion
+std_v: 0.001
+
+# parameter_sensor_distance
+std_const: 100
+std_mean: 0.001
+
+# parameter_decision
+rise_gain: 'never'

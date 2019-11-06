@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import copy
 import os
 import time
+import argparse
+import yaml
 
 import AGENT
 import RESULT
@@ -10,18 +12,29 @@ import RESULT
 
 class simulation:
 
-    def __init__(self, name_of_simulation, size_world, resolution, position_initial):
+    def __init__(self):
 
-        if resolution[0] / size_world[0] != resolution[1] / size_world[1]:
-            return 'size_world and resolution need to have the same aspect ratio'
+        # Get yaml parameter
+        parser = argparse.ArgumentParser()
+        parser.add_argument('yaml_file')
+        args = parser.parse_args()
+
+        with open(args.yaml_file, 'rt') as fh:
+            self.yaml_parameters = yaml.safe_load(fh)
+
+        # Initialize simulation parameters
+        self.name_of_simulation = self.yaml_parameters['name_of_simulation']
+        self.path = self.name_of_simulation
+        self.size_world = self.yaml_parameters['resolution']
+        self.size_world_real = self.yaml_parameters['size_world']
+        self.scaling = self.size_world[0] / self.size_world_real[0]
+
+        if self.size_world[0] / self.size_world_real[0] != self.size_world[1] / self.size_world_real[1]:
+            print ('size_world and resolution need to have the same aspect ratio')
 
         else:
-            # Initialize simulation dependent parameters
-            self.name_of_simulation = name_of_simulation
-            self.path = self.name_of_simulation
-            self.size_world = resolution
-            self.size_world_real = size_world
-            self.scaling = self.size_world[0] / self.size_world_real[0]
+            # Initialize parameter_position
+            position_initial = self.yaml_parameters['position_initial']
             for i in range(len(position_initial)):
                 position_initial[i] = [int(position_initial[i][0] * self.scaling), int(position_initial[i][1] * self.scaling)]
             self.position_initial = position_initial
@@ -40,8 +53,14 @@ class simulation:
             os.mkdir(self.path + '/performance')
 
 
-    def run(self, position_target):
-        self.position_target = [int(position_target[0] * self.scaling), int(position_target[1] * self.scaling)]
+    def run(self):
+
+        if self.yaml_parameters['position_target'] == 'random':
+            self.position_target = [np.random.randint(self.size_world_real[0]),
+                                    np.random.randint(self.size_world_real[1])]
+        else:
+            self.position_target = self.yaml_parameters['position_target']
+        self.position_target = [int(self.position_target[0] * self.scaling), int(self.position_target[1] * self.scaling)]
 
         # Initialize performance_time vector
         self.time_computation = 0
@@ -89,9 +108,9 @@ class simulation:
 
         # Looking for target until belief_state is accurate enough or runtime max is reached
         i = 0
-        max_belief = 980 / (self.size_world[0] * self.size_world[1]) # circa 0.098
+        max_belief = self.yaml_parameters['max_belief'] / (self.size_world[0] * self.size_world[1])
 
-        while (np.max(belief_maximum) < max_belief) & (i < 200):
+        while (np.max(belief_maximum) < max_belief) & (i < self.yaml_parameters['max_runtime']):
 
             # Start time for performance_time
             self.time_start = time.time()
@@ -256,12 +275,12 @@ class simulation:
         plt.savefig(self.path + '/performance/' + self.path + '_performance_time.png')
         plt.close()
 
-
 # Initialize a simulation
-my_simulation = simulation('test',[50000,50000], [100,100], [[0,0], [0,49999], [49999,49999]])
-for i in range(100):
+my_simulation = simulation()
+
+for i in range(10):
     # Everytime I set a new random position for the target
-    my_simulation.run([np.random.randint(50000), np.random.randint(50000)])
+    my_simulation.run()
 
     # Get information of performance over the total of all my simulations
     my_simulation.performance_target_position()

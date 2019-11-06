@@ -1,11 +1,25 @@
 import numpy as np
 import copy
+import argparse
+import yaml
 
 
 class decision:
 
-    def __init__(self, size_world, my_belief_target, my_belief_position, id_robot, id_contact, position_robot_estimate, my_sensor_target, path_depth, number_of_directions, step_distance):
+    def __init__(self, size_world, size_world_real, my_belief_target, my_belief_position, id_robot, id_contact, position_robot_estimate, my_sensor_target, path_depth, number_of_directions, step_distance):
+
+        # Get yaml parameter
+        parser = argparse.ArgumentParser()
+        parser.add_argument('yaml_file')
+        args = parser.parse_args()
+
+        with open(args.yaml_file, 'rt') as fh:
+            self.yaml_parameters = yaml.safe_load(fh)
+
+        # Initialize
         self.size_world = size_world
+        self.size_world_real = size_world_real
+        self.scaling = size_world[0] / size_world_real[0]
         self.my_belief_target = my_belief_target
         self.my_belief_position = my_belief_position
         self.position_robot_estimate = position_robot_estimate
@@ -31,10 +45,15 @@ class decision:
 
         else:
             # Update rise_gain
-            weight_std_robot = self.my_belief_position.belief_state[self.id_robot][0][1]
-            weight_target = np.max(self.my_belief_target.belief_state) * (self.size_world[0] * self.size_world[1])
+            if self.yaml_parameters['rise_gain'] == 'never':
+                self.rise_gain = 0
 
-            self.rise_gain = weight_std_robot / (2 * self.diving_depth)
+            if self.yaml_parameters['rise_gain'] == 'time':
+                weight_std_robot = self.my_belief_position.belief_state[self.id_robot][0][1] / self.scaling
+                weight_target = np.max(self.my_belief_target.belief_state) * (self.size_world[0] * self.size_world[1])
+                self.rise_gain = weight_std_robot / (2 * self.diving_depth)
+                print(self.rise_gain)
+
 
             # Find out who is involved in the decision
             id_robot = []
@@ -142,7 +161,7 @@ class decision:
             layer_max = (self.path_depth - 1) * len(id_robot) + len(id_robot)
 
             #if np.max(value[-1]) / layer_max > self.rise_gain:
-            if self.rise_gain < 1.2:
+            if self.rise_gain < 50.16:
                 # Choose path
                 my_layer = (self.path_depth - 1) * len(id_robot) + len(id_robot) - id_robot.index(self.id_robot) - 1
                 choice = int(np.argmax(value[-1]) / ((self.number_of_directions) ** my_layer)) % self.number_of_directions

@@ -1,11 +1,23 @@
 import numpy as np
 from scipy.special import erf
 import matplotlib.pyplot as plt
+import argparse
+import yaml
 
 
 class sensor_target_boolean:
 
     def __init__(self, path, size_world, size_world_real, position_target):
+
+        # Get yaml parameter
+        parser = argparse.ArgumentParser()
+        parser.add_argument('yaml_file')
+        args = parser.parse_args()
+
+        with open(args.yaml_file, 'rt') as fh:
+            self.yaml_parameters = yaml.safe_load(fh)
+
+        # Initialize
         self.path = path
         self.position_target = position_target
         self.size_world = size_world
@@ -14,11 +26,11 @@ class sensor_target_boolean:
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
-        self.cross_over = 3500 * self.scaling
-        self.width = 0.5
-        self.smoothness = 10
-        self.max_pos = 0.9
-        self.max_neg = 0.005
+        self.cross_over = self.yaml_parameters['cross_over'] * self.scaling
+        self.width = self.yaml_parameters['width'] * self.scaling
+        self.smoothness = self.yaml_parameters['smoothness']
+        self.max_pos = self.yaml_parameters['max_pos']
+        self.max_neg = self.yaml_parameters['max_neg']
 
 
     def sense(self, position_observe):
@@ -35,7 +47,7 @@ class sensor_target_boolean:
 
     def picture_save(self):
         # Initalize both axis
-        x = np.linspace(0, self.distance_max - 1, int(self.distance_max))
+        x = np.linspace(0, self.distance_max, int(self.distance_max / self.scaling))
         y = self.likelihood(x)
 
         # Plot sensor model
@@ -55,6 +67,16 @@ class sensor_target_boolean:
 class sensor_target_angle:
 
     def __init__(self, path, size_world, size_world_real, position_target):
+
+        # Get yaml parameter
+        parser = argparse.ArgumentParser()
+        parser.add_argument('yaml_file')
+        args = parser.parse_args()
+
+        with open(args.yaml_file, 'rt') as fh:
+            self.yaml_parameters = yaml.safe_load(fh)
+
+        # Initialize
         self.path = path
         self.position_target = position_target
         self.size_world = size_world
@@ -63,12 +85,12 @@ class sensor_target_angle:
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
-        self.cross_over = 3500 * self.scaling
-        self.width = 150 * self.scaling
-        self.smoothness = 5
-        self.max_pos = 0.9
-        self.max_neg = 0.005
-        self.std_angle = 3
+        self.cross_over = self.yaml_parameters['cross_over'] * self.scaling
+        self.width = self.yaml_parameters['width'] * self.scaling
+        self.smoothness = self.yaml_parameters['smoothness']
+        self.max_pos = self.yaml_parameters['max_pos']
+        self.max_neg = self.yaml_parameters['max_neg']
+        self.std_angle = self.yaml_parameters['std_angle']
 
 
     def sense(self, position_observe):
@@ -96,8 +118,7 @@ class sensor_target_angle:
 
     def angle_cdf(self, angle, x, distance):
         # std gets normed by the distance
-        #std = (self.std_angle / distance + 0.0001) / (self.likelihood(distance)) # To avoid dividing by zero
-        std = (self.std_angle / distance + 0.0001) # To avoid dividing by zero
+        std = (self.std_angle / distance + 0.0001) / (self.likelihood(distance)) # When far away -> random measurement
         cdf = 1 / 2 * (1 + erf((np.subtract(x, angle) / (std * np.sqrt(2)))))
         return cdf
 
@@ -108,7 +129,7 @@ class sensor_target_angle:
 
     def picture_save(self):
         # Initalize both axis
-        x = np.linspace(0, self.distance_max - 1, int(self.distance_max))
+        x = np.linspace(0, self.distance_max, int(self.distance_max / self.scaling))
         y = self.likelihood(x)
 
         # Plot sensor model
@@ -128,6 +149,16 @@ class sensor_target_angle:
 class sensor_motion:
 
     def __init__(self, path, size_world, size_world_real, step_distance):
+
+        # Get yaml parameter
+        parser = argparse.ArgumentParser()
+        parser.add_argument('yaml_file')
+        args = parser.parse_args()
+
+        with open(args.yaml_file, 'rt') as fh:
+            self.yaml_parameters = yaml.safe_load(fh)
+
+        # Inizialize
         self.path = path
         self.size_world = size_world
         self.size_world_real = size_world_real
@@ -136,8 +167,7 @@ class sensor_motion:
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
-        #self.std_v = 0.001 * self.step_distance
-        self.std_v = 0.1
+        self.std_v = self.yaml_parameters['std_v'] * self.step_distance
         self.std_move = self.gaussian_approx()
 
     def gaussian_approx(self):
@@ -206,15 +236,15 @@ class sensor_motion:
 
     def picture_save(self):
         # Initalize both axis
-        x = np.linspace(0, 5 * self.step_distance, int(5 * self.distance_max))
+        x = np.linspace(0, 2 * self.step_distance, int(self.distance_max / self.scaling))
         y = self.gaussian(x, self.likelihood_x([0, self.step_distance]))
 
         # Plot sensor model
-        plt.plot(x, y)
+        plt.plot(x / self.scaling, y * self.scaling)
         plt.xlabel('Change in position in e_x')
-        plt.xlim((0, 5 * self.step_distance))
+        plt.xlim((0, 2 * self.step_distance / self.scaling))
         plt.ylabel('Likelihood')
-        plt.ylim((0, 1))
+        #plt.ylim((0, 1))
         plt.title('sensor_motion')
 
         # Save picture in main folder
@@ -225,6 +255,16 @@ class sensor_motion:
 class sensor_distance:
 
     def __init__(self, path, size_world, size_world_real, communication_range_neighbour, id_robot, position_robot_exact):
+
+        # Get yaml parameter
+        parser = argparse.ArgumentParser()
+        parser.add_argument('yaml_file')
+        args = parser.parse_args()
+
+        with open(args.yaml_file, 'rt') as fh:
+            self.yaml_parameters = yaml.safe_load(fh)
+
+        # Initialize
         self.path = path
         self.size_world = size_world
         self.size_world_real = size_world_real
@@ -256,7 +296,7 @@ class sensor_distance:
 
 
     def standard_deviation(self, mean):
-        return 1 + mean * 5 * self.scaling
+        return self.yaml_parameters['std_const'] * self.scaling + mean * self.yaml_parameters['std_mean']
 
 
     def cdf(self, x, mean_std):
@@ -281,18 +321,18 @@ class sensor_distance:
 
     def picture_save(self):
         # Initalize both axis
-        x = np.linspace(0, self.distance_max - 1, int(self.distance_max))
+        x = np.linspace(0, self.distance_max, int(self.distance_max / self.scaling))
 
         # Plot likelyhood for n different means
         n = 5
         for i in range(0, n):
-            y = self.gaussian(x,self.likelihood(self.distance_max * i / n))
-            plt.plot(x / self.scaling, y)
+            y = self.gaussian(x, self.likelihood(self.distance_max * i / n))
+            plt.plot(x / self.scaling, y * self.scaling)
 
         plt.xlabel('Distance between robots')
         plt.xlim((0, self.distance_max / self.scaling))
         plt.ylabel('Likelihood')
-        plt.ylim((0, 1))
+        #plt.ylim((0, 1))
         plt.title('sensor_distance')
 
         # Save picture in main folder
