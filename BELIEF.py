@@ -25,10 +25,10 @@ class belief_target_boolean:
             self.position_log_estimate[self.id_robot] = self.position_log_estimate[self.id_robot] + [position_next]
 
             # Sensormeasurement true or false
-            if self.my_sensor_target.sense(position_next):
-                self.observation_log[self.id_robot] = self.observation_log[self.id_robot] + [1]
+            if measurement != 'no_measurement':
+                self.observation_log[self.id_robot] = self.observation_log[self.id_robot] + [measurement]
             else:
-                self.observation_log[self.id_robot] = self.observation_log[self.id_robot] + [0]
+                self.observation_log[self.id_robot] = self.observation_log[self.id_robot] + ['no_measurement']
         self.map_construction()
 
 

@@ -1,11 +1,11 @@
 # parameter_simulation
 name_of_simulation: 'test'
 size_world: [50000, 50000]
-resolution: [400, 400]
+resolution: [40, 40]
 position_initial: [[0, 0], [0, 50000], [50000, 0]]
-position_target: [45000, 20000]
+position_target: 'random'
 max_belief: 1300
-max_runtime: 100
+max_runtime: 500
 
 # parameter_robot
 step_distance: 1000
@@ -20,8 +20,7 @@ cross_over: 3500
 width: 150
 smoothness: 5
 max_pos: 0.9
-#max_neg: 0.005
-max_neg: 0.000001
+max_neg: 0.005
 std_angle: 3
 
 # parameter_sensor_motion
@@ -32,4 +31,6 @@ std_const: 100
 std_mean: 0.001
 
 # parameter_decision
-rise_gain: 'never'
+rise_gain: 'on'
+rise_time: 66
+rise_n: 5

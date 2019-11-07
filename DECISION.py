@@ -35,6 +35,8 @@ class decision:
 
         # Parameters that determine when to rise to the surface
         self.diving_depth = 1
+        self.rise_gain_initial = 0 - self.yaml_parameters['rise_time']
+        self.rise_gain = self.rise_gain_initial
 
 
     def decide(self):
@@ -44,17 +46,6 @@ class decision:
             return [0, 0]
 
         else:
-            # Update rise_gain
-            if self.yaml_parameters['rise_gain'] == 'never':
-                self.rise_gain = 0
-
-            if self.yaml_parameters['rise_gain'] == 'time':
-                weight_std_robot = self.my_belief_position.belief_state[self.id_robot][0][1] / self.scaling
-                weight_target = np.max(self.my_belief_target.belief_state) * (self.size_world[0] * self.size_world[1])
-                self.rise_gain = weight_std_robot / (2 * self.diving_depth)
-                print(self.rise_gain)
-
-
             # Find out who is involved in the decision
             id_robot = []
             for x in range(len(self.id_contact) - 1):
@@ -136,7 +127,7 @@ class decision:
                             y = np.linspace(0, self.size_world[1] - 1, self.size_world[1])
                             xy = np.meshgrid(x,y)
                             distance = np.sqrt(np.subtract(xy[0], position_observe[layer][i][0])**2 + np.subtract(xy[1], position_observe[layer][i][1])**2)
-                            weight_true = np.sum(np.multiply(self.my_sensor_target.likelihood(distance), self.my_belief_target.belief_state))
+                            weight_true = np.sum(np.multiply(self.my_belief_target.belief_state, self.my_sensor_target.likelihood(distance)))
                             weight_false = 1 - weight_true
 
                             # In the first layer the novelty doesn't exist, so I set it do a default value with respect to its last know point
@@ -157,17 +148,31 @@ class decision:
                     for i in range((self.number_of_directions) ** layer):
                         value[layer][i] = value[layer][i] + value[layer-1][int(i / (self.number_of_directions))]
 
-            # Rise to the surface or continue exploring
-            layer_max = (self.path_depth - 1) * len(id_robot) + len(id_robot)
+            # Update rise_gain
+            if (self.yaml_parameters['rise_gain'] == 'on') & (len(self.id_contact) > 2): # It doesn't make sense for one robot to surface
+                self.rise_gain = self.rise_gain + 1
 
-            #if np.max(value[-1]) / layer_max > self.rise_gain:
-            if self.rise_gain < 50.16:
+                # Do not surface if you've seen the target in the past n steps
+                n = self.yaml_parameters['rise_n']
+                if self.rise_gain >= 0:
+                    if len(self.my_belief_target.observation_log[self.id_robot]) < n:
+                        for test in self.my_belief_target.observation_log[self.id_robot]:
+                            if test != 'no_measurement':
+                                self.rise_gain = self.rise_gain_initial
+                    else:
+                        for test in self.my_belief_target.observation_log[self.id_robot][-n::]:
+                            if test != 'no_measurement':
+                                self.rise_gain = self.rise_gain_initial
+
+            if self.rise_gain < 0:
                 # Choose path
                 my_layer = (self.path_depth - 1) * len(id_robot) + len(id_robot) - id_robot.index(self.id_robot) - 1
                 choice = int(np.argmax(value[-1]) / ((self.number_of_directions) ** my_layer)) % self.number_of_directions
                 return [choice * self.step_angle, self.step_distance]
+
             else:
                 # Choose to rise
+                self.rise_gain = self.rise_gain_initial + 2 * self.diving_depth
                 self.id_contact[-1][0] = 2 * self.diving_depth
                 return [0, 0]
 

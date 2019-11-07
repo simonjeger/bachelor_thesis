@@ -39,10 +39,10 @@ class sensor_target_boolean:
         if np.random.random_sample(1) < self.likelihood(distance):
             return 1
         else:
-            return 0
+            return 'no_measurement '
 
     def likelihood(self, distance):
-        return self.max_pos - (self.max_pos - self.max_neg) * 1 / 2 * (1 + erf((np.multiply(1 / self.width, np.subtract(distance, self.cross_over))) / (self.inclination * np.sqrt(2))))
+        return self.max_pos - (self.max_pos - self.max_neg) * 1 / 2 * (1 + erf((np.multiply(1 / self.width, np.subtract(distance, self.cross_over))) / (self.smoothness * np.sqrt(2))))
 
 
     def picture_save(self):
@@ -112,13 +112,13 @@ class sensor_target_angle:
 
     def likelihood_angle(self, angle_relativ):
         # std is independent of distance
-        std = self.std_angle / self.cross_over
+        std = (self.std_angle / self.cross_over)
         normal_distr = 1 / np.sqrt(2 * np.pi * std ** 2) * np.exp(- np.square(angle_relativ) / (2 * std ** 2))
         return normal_distr
 
     def angle_cdf(self, angle, x, distance):
         # std gets normed by the distance
-        std = (self.std_angle / distance + 0.0001) / (self.likelihood(distance)) # When far away -> random measurement
+        std = (self.std_angle / distance) * self.likelihood(self.cross_over) / self.likelihood(distance) # When far away -> random measurement
         cdf = 1 / 2 * (1 + erf((np.subtract(x, angle) / (std * np.sqrt(2)))))
         return cdf
 

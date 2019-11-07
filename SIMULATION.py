@@ -214,6 +214,11 @@ class simulation:
                         if len(self.my_robot[x].my_belief_target.position_log_estimate[z]) < len(self.my_homebase.my_belief_target.position_log_estimate[z]):
                             self.my_robot[x].my_belief_target.merge(z, self.my_homebase.my_belief_target.position_log_estimate[z], self.my_homebase.my_belief_target.observation_log[z])
 
+                    # Update the position estimate of my neighbour about me
+                    for y in range(len(self.my_robot)):
+                        if x != y:
+                            self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
+
 
             # How long it takes to compute everything
             self.time_computation = self.time_computation + (time.time() - self.time_start)
@@ -278,7 +283,7 @@ class simulation:
 # Initialize a simulation
 my_simulation = simulation()
 
-for i in range(10):
+for i in range(200):
     # Everytime I set a new random position for the target
     my_simulation.run()
 
