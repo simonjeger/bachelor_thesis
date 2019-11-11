@@ -1,7 +1,7 @@
 # parameter_simulation
 name_of_simulation: 'test'
 size_world: [50000, 50000]
-resolution: [40, 40]
+resolution: [80, 80]
 position_initial: [[0, 0], [0, 50000], [50000, 0]]
 position_target: 'random'
 max_belief: 1300
@@ -20,7 +20,8 @@ cross_over: 3500
 width: 150
 smoothness: 5
 max_pos: 0.9
-max_neg: 0.005
+#max_neg: 0.005
+max_neg: 0.0000001
 std_angle: 3
 
 # parameter_sensor_motion
@@ -30,7 +31,12 @@ std_v: 0.001
 std_const: 100
 std_mean: 0.001
 
+# parameter_belief_position
+std_x: 100
+std_y: 100
+
 # parameter_decision
+decision: 'expensive'
 rise_gain: 'on'
 rise_time: 66
 rise_n: 5

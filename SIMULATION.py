@@ -56,8 +56,7 @@ class simulation:
     def run(self):
 
         if self.yaml_parameters['position_target'] == 'random':
-            self.position_target = [np.random.randint(self.size_world_real[0]),
-                                    np.random.randint(self.size_world_real[1])]
+            self.position_target = [np.random.randint(self.size_world_real[0]), np.random.randint(self.size_world_real[1])]
         else:
             self.position_target = self.yaml_parameters['position_target']
         self.position_target = [int(self.position_target[0] * self.scaling), int(self.position_target[1] * self.scaling)]
@@ -129,7 +128,10 @@ class simulation:
             angle_step_distance = [0] * len(self.my_robot)
             for x in range(len(self.my_robot)):
                 # Decide on next position
-                angle_step_distance[x] = self.my_robot[x].my_decision.decide()
+                if self.yaml_parameters['decision'] == 'cheap':
+                    angle_step_distance[x] = self.my_robot[x].my_decision.decide_cheap()
+                if self.yaml_parameters['decision'] == 'expensive':
+                    angle_step_distance[x] = self.my_robot[x].my_decision.decide_expensive()
 
                 # Actually changing the position
                 self.my_robot[x].update_exact(angle_step_distance[x])

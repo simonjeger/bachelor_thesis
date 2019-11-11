@@ -1,4 +1,6 @@
 import numpy as np
+import argparse
+import yaml
 
 
 class belief_target_boolean:
@@ -89,7 +91,7 @@ class belief_target_boolean:
         test = posterior
 
         # Now we'll normalize (target must be here somewhere...)
-        test = test / np.sum(self.belief_state)
+        test = test / np.sum(test)
 
         return test
 
@@ -114,7 +116,7 @@ class belief_target_boolean:
         test = posterior
 
         # Now we'll normalize (target must be here somewhere...)
-        test = test / np.sum(self.belief_state)
+        test = test / np.sum(test)
 
         return test
 
@@ -222,7 +224,7 @@ class belief_target_angle:
         test = posterior
 
         # Now we'll normalize (target must be here somewhere...)
-        test = test / np.sum(self.belief_state)
+        test = test / np.sum(test)
 
         return test
 
@@ -247,7 +249,7 @@ class belief_target_angle:
         test = posterior
 
         # Now we'll normalize (target must be here somewhere...)
-        test = test / np.sum(self.belief_state)
+        test = test / np.sum(test)
 
         return test
 
@@ -256,6 +258,14 @@ class belief_target_angle:
 class belief_position:
 
     def __init__(self, scaling, id_robot, position_robot_exact, position_robot_estimate, my_sensor_distance, my_sensor_motion, number_of_robots):
+
+        # Get yaml parameter
+        parser = argparse.ArgumentParser()
+        parser.add_argument('yaml_file')
+        args = parser.parse_args()
+
+        with open(args.yaml_file, 'rt') as fh:
+            self.yaml_parameters = yaml.safe_load(fh)
 
         # Initialize
         self.scaling = scaling
@@ -269,9 +279,9 @@ class belief_position:
 
         # Parameters for belief_position_me
         self.mean_x = self.position_robot_estimate[self.id_robot][0]
-        self.std_x = 100 * self.scaling
+        self.std_x = self.yaml_parameters['std_x'] * self.scaling
         self.mean_y = self.position_robot_estimate[self.id_robot][1]
-        self.std_y = 100 * self.scaling
+        self.std_y = self.yaml_parameters['std_y'] * self.scaling
 
         self.belief_state[self.id_robot] = [[self.mean_x, self.std_x], [self.mean_y, self.std_y]]
 
