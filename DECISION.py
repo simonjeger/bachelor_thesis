@@ -7,8 +7,7 @@ import yaml
 
 class decision:
 
-    def __init__(self, size_world, size_world_real, my_belief_target, my_belief_position, id_robot, id_contact,
-                 position_robot_estimate, my_sensor_target, path_depth, number_of_directions, step_distance):
+    def __init__(self, size_world, size_world_real, my_belief_target, my_belief_position, id_robot, id_contact, position_robot_estimate, my_sensor_target, path_depth, number_of_directions, step_distance):
 
         # Get yaml parameter
         parser = argparse.ArgumentParser()
@@ -36,7 +35,7 @@ class decision:
         self.step_angle = 2 * np.pi / self.number_of_directions
 
         # Parameters that determine when to rise to the surface
-        self.diving_depth = 1
+        self.diving_depth = self.yaml_parameters['diving_depth']
         self.rise_gain_initial = 0 - self.yaml_parameters['rise_time']
         self.rise_gain = self.rise_gain_initial
 
@@ -251,16 +250,9 @@ class decision:
                         y = y + position_observe[layer]
 
                     for i in range(len(y)):
-                        print(self.id_robot)
-                        print(layer)
-                        print(len(position_observe[layer]))
-                        print(i)
-                        print(int(i % self.number_of_directions) + int(i / (2 * self.number_of_directions)) * self.number_of_directions)
-                        print('\n')
                         y[i] = position_observe[layer][int(i % self.number_of_directions) + int(i / (2 * self.number_of_directions * n)) * self.number_of_directions]
 
                     position_observe[layer] = y
-            print('\n')
 
             # Fill in the other trees
             for k in range(1, self.path_depth + 1):
@@ -288,7 +280,7 @@ class decision:
                         else:
                             belief_state_future[layer][p] = self.my_belief_target.test_false(position_observe[layer][int(p / 2)])
 
-            # Multiply the fuck out of everything
+            # Multiply down the tree
             for k in range(1, self.path_depth + 1):
                 for j in range(len(id_robot)):
                     layer = (k - 1) * len(id_robot) + j + 1
@@ -298,7 +290,7 @@ class decision:
                             belief_state_future[layer][p] = np.multiply(belief_state_future[layer][p], belief_state_future[layer - 1][int(p/(2 * self.number_of_directions))])
                             belief_state_future[layer][p] = belief_state_future[layer][p] / np.sum(belief_state_future[layer][p])
 
-            # Determine value tree
+            # Determine value row
             for k in range(self.path_depth, self.path_depth + 1):
                 for j in range(len(id_robot) - 1, len(id_robot)):
                     layer = (k - 1) * len(id_robot) + j + 1
@@ -313,7 +305,11 @@ class decision:
                                 value[layer][i] = value[layer][i] + weight[layer][p] * self.kullback_leibler(belief_state_future[layer][p], self.my_belief_target.belief_state) + weight[layer][p + 1] * self.kullback_leibler(belief_state_future[layer][p + 1], self.my_belief_target.belief_state)
 
             # Update rise_gain
-            if (self.yaml_parameters['rise_gain'] == 'on') & (len(self.id_contact) > 2):  # It doesn't make sense for one robot to surface
+            if (self.yaml_parameters['rise_gain'] == 'on') & (len(self.id_contact) > 2) & (self.rise_gain_initial + 2 * self.diving_depth < 0):
+                # Surfacing has to be turned on
+                # It doesn't make sense to surface in a single robot mission
+                # Dependent on the depth at some point it doesn't make sense to surface anymore because it takes too long
+
                 self.rise_gain = self.rise_gain + 1
 
                 # Do not surface if you've seen the target in the past n steps

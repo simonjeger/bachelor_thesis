@@ -39,7 +39,7 @@ class sensor_target_boolean:
         if np.random.random_sample(1) < self.likelihood(distance):
             return 1
         else:
-            return 'no_measurement '
+            return 'no_measurement'
 
     def likelihood(self, distance):
         return self.max_pos - (self.max_pos - self.max_neg) * 1 / 2 * (1 + erf((np.multiply(1 / self.width, np.subtract(distance, self.cross_over))) / (self.smoothness * np.sqrt(2))))

@@ -112,5 +112,8 @@ class homebase:
         self.my_sensor_motion = SENSOR.sensor_motion(self.path, self.size_world, self.size_world_real, self.step_distance)
 
         # Initialize belief
-        self.my_belief_target = BELIEF.hb_belief_target(self.size_world, self.my_sensor_target, self.number_of_robots)
+        if self.yaml_parameters['choice_sensor_target'] == 'boolean':
+            self.my_belief_target = BELIEF.hb_belief_target_boolean(self.size_world, self.my_sensor_target, self.number_of_robots)
+        if self.yaml_parameters['choice_sensor_target'] == 'angle':
+            self.my_belief_target = BELIEF.hb_belief_target_angle(self.size_world, self.my_sensor_target, self.number_of_robots)
         self.my_belief_position = BELIEF.hb_belief_position(self.my_sensor_motion, self.position_robot_exact, self.number_of_robots)
