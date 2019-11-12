@@ -49,11 +49,10 @@ class simulation:
             self.cicle = 0
 
             # Make directories
-            os.mkdir(self.path)
-            os.mkdir(self.path + '/video')
-            os.mkdir(self.path + '/sensor')
-            os.mkdir(self.path + '/performance')
-
+            os.makedirs(self.path, exist_ok=True)
+            os.makedirs(self.path + '/video', exist_ok=True)
+            os.makedirs(self.path + '/sensor', exist_ok=True)
+            os.makedirs(self.path + '/performance', exist_ok=True)
 
     def run(self):
 

@@ -21,7 +21,7 @@ class result:
         self.size_point = 1 / 150 * np.sqrt(self.size_world_real[0]**2 + self.size_world_real[1]**2) # circa 0.943
 
         # Generate new folder
-        os.mkdir(self.path + '/construction')
+        os.makedirs(self.path + '/construction', exist_ok=True)
 
 
     def build_xy(self, belief_state):
