@@ -341,5 +341,5 @@ class decision:
         result = 0
         for i_y in range(0, self.size_world[1]):
             for i_x in range(0, self.size_world[0]):
-                result = result + abs(np.multiply(x[i_y][i_x], np.log(abs(np.divide(x[i_y][i_x], y[i_y][i_x])))))
+                result = result + np.multiply(x[i_y][i_x], np.log(np.divide(x[i_y][i_x], y[i_y][i_x])))
         return result
