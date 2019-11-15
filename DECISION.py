@@ -338,8 +338,9 @@ class decision:
 
 
     def kullback_leibler(self, x, y):
-        result = 0
-        for i_y in range(0, self.size_world[1]):
-            for i_x in range(0, self.size_world[0]):
-                result = result + np.multiply(x[i_y][i_x], np.log(np.divide(x[i_y][i_x], y[i_y][i_x])))
+#        result = 0
+#        for i_y in range(0, self.size_world[1]):
+#            for i_x in range(0, self.size_world[0]):
+#                result = result + np.multiply(x[i_y][i_x], np.log(np.divide(x[i_y][i_x], y[i_y][i_x])))
+        result = np.sum(np.multiply(x, np.log(np.divide(x, y))))
         return result
