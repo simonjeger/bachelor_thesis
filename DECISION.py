@@ -31,7 +31,7 @@ class decision:
         # Parameters that determine the motion of the robot
         self.path_depth = path_depth
         self.number_of_directions = number_of_directions
-        self.step_distance = step_distance
+        self.step_distance = step_distance * self.yaml_parameters['deciding_rate']
         self.step_angle = 2 * np.pi / self.number_of_directions
 
         # Parameters that determine when to rise to the surface
@@ -171,7 +171,8 @@ class decision:
                 my_layer = (self.path_depth - 1) * len(id_robot) + len(id_robot) - id_robot.index(self.id_robot) - 1
                 choice = int(np.argmax(value[-1]) / ((self.number_of_directions) ** my_layer)) % self.number_of_directions
 
-                return [choice * self.step_angle, self.step_distance]
+                # Norm it again to a stepsize that it can walk
+                return [choice * self.step_angle, self.step_distance / self.yaml_parameters['deciding_rate']]
 
             else:
                 # Choose to rise
@@ -328,7 +329,8 @@ class decision:
                 # Choose path
                 my_layer = (self.path_depth - 1) * len(id_robot) + len(id_robot) - id_robot.index(self.id_robot) - 1
                 choice = int(np.argmax(value[-1]) / ((self.number_of_directions) ** my_layer)) % self.number_of_directions
-                return [choice * self.step_angle, self.step_distance]
+                # Norm it again to a stepsize that it can walk
+                return [choice * self.step_angle, self.step_distance / self.yaml_parameters['deciding_rate']]
 
             else:
                 # Choose to rise
@@ -338,9 +340,5 @@ class decision:
 
 
     def kullback_leibler(self, x, y):
-#        result = 0
-#        for i_y in range(0, self.size_world[1]):
-#            for i_x in range(0, self.size_world[0]):
-#                result = result + np.multiply(x[i_y][i_x], np.log(np.divide(x[i_y][i_x], y[i_y][i_x])))
         result = np.sum(np.multiply(x, np.log(np.divide(x, y))))
         return result

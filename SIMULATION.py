@@ -30,6 +30,7 @@ class simulation:
         self.size_world = self.yaml_parameters['resolution']
         self.size_world_real = self.yaml_parameters['size_world']
         self.scaling = self.size_world[0] / self.size_world_real[0]
+        self.d = self.yaml_parameters['deciding_rate']
 
         if self.size_world[0] / self.size_world_real[0] != self.size_world[1] / self.size_world_real[1]:
             print ('size_world and resolution need to have the same aspect ratio')
@@ -126,14 +127,23 @@ class simulation:
                 self.my_robot[x].update_estimate_neighbour()
 
             # Deside where to go next, go there and update my beliefs accordingly
-            angle_step_distance = [0] * len(self.my_robot)
-            for x in range(len(self.my_robot)):
-                # Decide on next position
-                if self.yaml_parameters['decision'] == 'cheap':
-                    angle_step_distance[x] = self.my_robot[x].my_decision.decide_cheap()
-                if self.yaml_parameters['decision'] == 'expensive':
-                    angle_step_distance[x] = self.my_robot[x].my_decision.decide_expensive()
+            if self.d >= self.yaml_parameters['deciding_rate']:
+                self.d = 1
+                angle_step_distance = [0] * len(self.my_robot)
+                for x in range(len(self.my_robot)):
+                    # Decide on next position
+                    if self.yaml_parameters['decision'] == 'cheap':
+                        angle_step_distance[x] = self.my_robot[x].my_decision.decide_cheap()
+                    if self.yaml_parameters['decision'] == 'expensive':
+                        angle_step_distance[x] = self.my_robot[x].my_decision.decide_expensive()
 
+                # Increase runtime counter
+                i = i + 1
+
+            else:
+                self.d = self.d + 1
+
+            for x in range(len(self.my_robot)):
                 # Actually changing the position
                 self.my_robot[x].update_exact(angle_step_distance[x])
 
@@ -232,9 +242,6 @@ class simulation:
             # How long it takes to save a picture
             self.time_picture = self.time_picture + (time.time() - self.time_start)
 
-            # Increase runtime counter
-            i = i + 1
-
         # Turn saved pictures into video and then delete the pictures
         self.my_result.video_save()
 
@@ -286,7 +293,7 @@ class simulation:
 # Initialize a simulation
 my_simulation = simulation()
 
-for i in range(200):
+for i in range(1000):
     # Everytime I set a new random position for the target
     my_simulation.run()
 

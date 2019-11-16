@@ -1,14 +1,15 @@
 # parameter_simulation
 name_of_simulation: 'test'
 size_world: [50000, 50000]
-resolution: [80, 80]
+resolution: [40, 40]
 position_initial: [[0, 0], [0, 50000], [50000, 0]]
 position_target: 'random'
 max_belief: 1500
-max_runtime: 500
+max_runtime: 10000
 
 # parameter_robot
-step_distance: 1000
+deciding_rate: 1000 #steps/decision
+step_distance: 2
 number_of_directions: 8
 path_depth: 1
 communication_range_observation: 5000
@@ -35,7 +36,7 @@ std_x: 100
 std_y: 100
 
 # parameter_decision
-decision: 'expensive'
+decision: 'cheap'
 rise_gain: 'on'
 rise_time: 66
 rise_n: 5

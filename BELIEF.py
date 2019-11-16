@@ -39,10 +39,6 @@ class belief_target_boolean:
         for y in range(len(self.position_log_estimate)):
             for x in range(self.map_update[y], len(self.position_log_estimate[y])):
                 # Distance to point of measurement
-#                distance = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-#                for i_y in range(self.size_world[1]):
-#                    for i_x in range(self.size_world[0]):
-#                        distance[i_y][i_x] = np.sqrt((i_x - self.position_log_estimate[y][x][0]) ** 2 + (i_y - self.position_log_estimate[y][x][1]) ** 2)
                 xw = np.linspace(0, self.size_world[0]-1, self.size_world[0])
                 yw = np.linspace(0, self.size_world[1]-1, self.size_world[1])
                 xv, yv = np.meshgrid(xw, yw)
@@ -83,10 +79,6 @@ class belief_target_boolean:
         prior = self.belief_state
 
         # Distance to point of measurement
-#        distance = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-#        for i_y in range(self.size_world[1]):
-#            for i_x in range(self.size_world[0]):
-#                distance[i_y][i_x] = np.sqrt((i_x - position_observe[0]) ** 2 + (i_y - position_observe[1]) ** 2)
         xw = np.linspace(0, self.size_world[0]-1, self.size_world[0])
         yw = np.linspace(0, self.size_world[1]-1, self.size_world[1])
         xv, yv = np.meshgrid(xw, yw)
@@ -114,10 +106,6 @@ class belief_target_boolean:
         prior = self.belief_state
 
         # Distance to point of measurement
-#        distance = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-#        for i_y in range(self.size_world[1]):
-#            for i_x in range(self.size_world[0]):
-#                distance[i_y][i_x] = np.sqrt((i_x - position_observe[0]) ** 2 + (i_y - position_observe[1]) ** 2)
         xw = np.linspace(0, self.size_world[0]-1, self.size_world[0])
         yw = np.linspace(0, self.size_world[1]-1, self.size_world[1])
         xv, yv = np.meshgrid(xw, yw)
@@ -177,11 +165,6 @@ class belief_target_angle:
         for y in range(len(self.position_log_estimate)):
             for x in range(self.map_update[y], len(self.position_log_estimate[y])):
                 # Distance to point of measurement
-#                distance = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-#                angle = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-#                for i_y in range(self.size_world[1]):
-#                    for i_x in range(self.size_world[0]):
-#                        distance[i_y][i_x] = np.sqrt((i_x - self.position_log_estimate[y][x][0]) ** 2 + (i_y - self.position_log_estimate[y][x][1]) ** 2)
                 xw = np.linspace(0, self.size_world[0]-1, self.size_world[0])
                 yw = np.linspace(0, self.size_world[1]-1, self.size_world[1])
                 xv, yv = np.meshgrid(xw, yw)
@@ -192,10 +175,6 @@ class belief_target_angle:
                 if self.observation_log[y][x] != 'no_measurement':
                     measurement = self.observation_log[y][x]
 
-#                    for i_y in range(self.size_world[1]):
-#                        for i_x in range(self.size_world[0]):
-#                            angle_abs = np.arctan2(i_y - self.position_log_estimate[y][x][1], i_x - self.position_log_estimate[y][x][0])
-#                            angle[i_y][i_x] = np.min([abs(angle_abs - measurement), abs(angle_abs - measurement - 2 * np.pi), abs(angle_abs - measurement + 2 * np.pi)])
                     xw = np.linspace(0, self.size_world[0]-1, self.size_world[0])
                     yw = np.linspace(0, self.size_world[1]-1, self.size_world[1])
                     xv, yv = np.meshgrid(xw, yw)
@@ -241,10 +220,6 @@ class belief_target_angle:
         prior = self.belief_state
 
         # Distance to point of measurement
-#        distance = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-#        for i_y in range(self.size_world[1]):
-#            for i_x in range(self.size_world[0]):
-#                distance[i_y][i_x] = np.sqrt((i_x - position_observe[0]) ** 2 + (i_y - position_observe[1]) ** 2)
         xw = np.linspace(0, self.size_world[0]-1, self.size_world[0])
         yw = np.linspace(0, self.size_world[1]-1, self.size_world[1])
         xv, yv = np.meshgrid(xw, yw)
@@ -272,10 +247,6 @@ class belief_target_angle:
         prior = self.belief_state
 
         # Distance to point of measurement
-#        distance = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-#        for i_y in range(self.size_world[1]):
-#            for i_x in range(self.size_world[0]):
-#                distance[i_y][i_x] = np.sqrt((i_x - position_observe[0]) ** 2 + (i_y - position_observe[1]) ** 2)
         xw = np.linspace(0, self.size_world[0]-1, self.size_world[0])
         yw = np.linspace(0, self.size_world[1]-1, self.size_world[1])
         xv, yv = np.meshgrid(xw, yw)
@@ -452,10 +423,6 @@ class hb_belief_target_boolean:
         for y in range(len(self.position_log_estimate)):
             for x in range(self.map_update[y], len(self.position_log_estimate[y])):
                 # Distance to point of measurement
-#                distance = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-#                for i_y in range(self.size_world[1]):
-#                    for i_x in range(self.size_world[0]):
-#                        distance[i_y][i_x] = np.sqrt((i_x - self.position_log_estimate[y][x][0]) ** 2 + (i_y - self.position_log_estimate[y][x][1]) ** 2)
                 xw = np.linspace(0, self.size_world[0]-1, self.size_world[0])
                 yw = np.linspace(0, self.size_world[1]-1, self.size_world[1])
                 xv, yv = np.meshgrid(xw, yw)
@@ -512,12 +479,6 @@ class hb_belief_target_angle:
         for y in range(len(self.position_log_estimate)):
             for x in range(self.map_update[y], len(self.position_log_estimate[y])):
                 # Distance to point of measurement
-#                distance = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-#                angle = [[1 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-#                for i_y in range(self.size_world[1]):
-#                    for i_x in range(self.size_world[0]):
-#                        distance[i_y][i_x] = np.sqrt((i_x - self.position_log_estimate[y][x][0]) ** 2 + (
-#                                    i_y - self.position_log_estimate[y][x][1]) ** 2)
                 xw = np.linspace(0, self.size_world[0]-1, self.size_world[0])
                 yw = np.linspace(0, self.size_world[1]-1, self.size_world[1])
                 xv, yv = np.meshgrid(xw, yw)
@@ -528,13 +489,6 @@ class hb_belief_target_angle:
                 if self.observation_log[y][x] != 'no_measurement':
                     measurement = self.observation_log[y][x]
 
-#                    for i_y in range(self.size_world[1]):
-#                        for i_x in range(self.size_world[0]):
-#                            angle_abs = np.arctan2(i_y - self.position_log_estimate[y][x][1],
-#                                                   i_x - self.position_log_estimate[y][x][0])
-#                            angle[i_y][i_x] = np.min(
-#                                [abs(angle_abs - measurement), abs(angle_abs - measurement - 2 * np.pi),
-#                                 abs(angle_abs - measurement + 2 * np.pi)])
                     xw = np.linspace(0, self.size_world[0]-1, self.size_world[0])
                     yw = np.linspace(0, self.size_world[1]-1, self.size_world[1])
                     xv, yv = np.meshgrid(xw, yw)

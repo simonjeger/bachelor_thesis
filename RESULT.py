@@ -3,11 +3,23 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import cv2
 import os
+import argparse
+import yaml
 
 
 class result:
 
     def __init__(self, path, name_of_simulation, size_world, size_world_real, position_target, my_robot, my_homebase):
+
+        # Get yaml parameter
+        parser = argparse.ArgumentParser()
+        parser.add_argument('yaml_file')
+        args = parser.parse_args()
+
+        with open(args.yaml_file, 'rt') as fh:
+            self.yaml_parameters = yaml.safe_load(fh)
+
+        # Initialize
         self.path = path
         self.name_of_simulation = name_of_simulation
         self.size_world = size_world
@@ -85,18 +97,22 @@ class result:
             # Belief_state_target
             ax[x, 0].imshow(self.my_robot[x].my_belief_target.belief_state, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
 
+                # Position estimate of my own position
             pos = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point, color=color_robot, fill=True)
             ax[x, 0].add_patch(pos)
 
+                # Rising sign
             if self.my_robot[x].id_contact[-1][0] != 0:
                 ris = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point * 3, color=color_robot, fill=False)
                 ax[x, 0].add_patch(ris)
 
+                # Path of past positions (only make a dot when I take a decision)
             pas = []
-            for i in range(len(self.my_robot[x].my_belief_target.position_log_estimate[x])):
-                pas = pas + [patches.Circle(np.divide(self.my_robot[x].my_belief_target.position_log_estimate[x][i], self.scaling), radius=self.size_point / 5, color=color_robot, fill=True)]
+            for i in range(int(len(self.my_robot[x].my_belief_target.position_log_estimate[x]) / self.yaml_parameters['deciding_rate'])):
+                pas = pas + [patches.Circle(np.divide(self.my_robot[x].my_belief_target.position_log_estimate[x][i * self.yaml_parameters['deciding_rate']], self.scaling), radius=self.size_point / 5, color=color_robot, fill=True)]
                 ax[x, 0].add_patch(pas[i])
 
+                # Position of target
             tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=True)
             ax[x, 0].add_patch(tar)
 
