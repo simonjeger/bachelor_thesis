@@ -3,15 +3,20 @@ name_of_simulation: 'test'
 size_world: [50000, 50000]
 resolution: [40, 40]
 position_initial: [[0, 0], [0, 50000], [50000, 0]]
+position_initial: [[4000, 0]]
 position_target: 'random'
 max_belief: 1500
-max_runtime: 10000
+max_runtime: 20000
 
 # parameter_robot
-deciding_rate: 1000 #steps/decision
-step_distance: 2
+#deciding_rate: 1000 #steps/decision
+#step_distance: 2
+deciding_rate: 10 #steps/decision
+step_distance: 80
 number_of_directions: 8
+number_of_directions: 4
 path_depth: 1
+#communication_range_observation: 5000
 communication_range_observation: 5000
 communication_range_neighbour: 9500
 choice_sensor_target: 'angle'
@@ -21,7 +26,8 @@ cross_over: 3500
 width: 150
 smoothness: 5
 max_pos: 0.9
-max_neg: 0.0005
+#max_neg: 0.0005
+max_neg: 0.0000005
 std_angle: 3
 
 # parameter_sensor_motion
@@ -36,8 +42,9 @@ std_x: 100
 std_y: 100
 
 # parameter_decision
-decision: 'cheap'
+decision: 'expensive'
 rise_gain: 'on'
-rise_time: 66
+#rise_time: 66
+rise_time: ''
 rise_n: 5
 diving_depth: 1

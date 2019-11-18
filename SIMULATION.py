@@ -30,7 +30,6 @@ class simulation:
         self.size_world = self.yaml_parameters['resolution']
         self.size_world_real = self.yaml_parameters['size_world']
         self.scaling = self.size_world[0] / self.size_world_real[0]
-        self.d = self.yaml_parameters['deciding_rate']
 
         if self.size_world[0] / self.size_world_real[0] != self.size_world[1] / self.size_world_real[1]:
             print ('size_world and resolution need to have the same aspect ratio')
@@ -67,6 +66,9 @@ class simulation:
         self.time_computation = 0
         self.time_picture = 0
 
+        # Initialize decision rate parameter
+        self.d = self.yaml_parameters['deciding_rate']
+
         # Name accordingly to cicle
         self.name_of_simulation = self.path + '_' + str(self.cicle)
 
@@ -74,7 +76,7 @@ class simulation:
         self.my_robot = [0] * len(self.position_initial)
         self.my_decision = [0] * len(self.position_initial)
         for x in range(len(self.position_initial)):
-            self.my_robot[x] = AGENT.auv(self.path, self.size_world, self.size_world_real, self.position_target, len(self.position_initial), x, self.position_initial)
+            self.my_robot[x] = AGENT.bluefin(self.path, self.size_world, self.size_world_real, self.position_target, len(self.position_initial), x, self.position_initial)
 
         # Initialize the homebase
         self.my_homebase = AGENT.homebase(self.path, self.size_world, self.size_world_real, self.position_target, len(self.position_initial), self.position_initial)
@@ -111,7 +113,12 @@ class simulation:
         i = 0
         max_belief = self.yaml_parameters['max_belief'] / (self.size_world[0] * self.size_world[1])
 
-        while (np.max(belief_maximum) < max_belief) & (i < self.yaml_parameters['max_runtime']):
+        if self.yaml_parameters['max_runtime'] == '':
+            max_runtime = self.my_robot[-1].range / (self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate'])
+        else:
+            max_runtime = self.yaml_parameters['max_runtime']
+
+        while (np.max(belief_maximum) < max_belief) & (i < max_runtime):
 
             # Start time for performance_time
             self.time_start = time.time()
@@ -136,9 +143,6 @@ class simulation:
                         angle_step_distance[x] = self.my_robot[x].my_decision.decide_cheap()
                     if self.yaml_parameters['decision'] == 'expensive':
                         angle_step_distance[x] = self.my_robot[x].my_decision.decide_expensive()
-
-                # Increase runtime counter
-                i = i + 1
 
             else:
                 self.d = self.d + 1
@@ -170,6 +174,7 @@ class simulation:
             # Update homebase_belief_state
             self.my_homebase.my_belief_position.update()
 
+            #if self.d >= self.yaml_parameters['deciding_rate']:
             # Exchange belief if close enough
             distance_estimate = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
             distance_exact = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
@@ -232,12 +237,15 @@ class simulation:
                         if x != y:
                             self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
 
+            # Increase runtime counter
+            i = i + 1
 
             # How long it takes to compute everything
             self.time_computation = self.time_computation + (time.time() - self.time_start)
 
-            # Safe picture of the beliefs (target & position)
-            self.my_result.picture_save()
+            if self.d >= self.yaml_parameters['deciding_rate']:
+                # Safe picture of the beliefs (target & position) only everytime i take a picture
+                self.my_result.picture_save()
 
             # How long it takes to save a picture
             self.time_picture = self.time_picture + (time.time() - self.time_start)

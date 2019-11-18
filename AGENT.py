@@ -8,7 +8,7 @@ import argparse
 import yaml
 
 
-class auv:
+class bluefin:
 
     def __init__(self, path, size_world, size_world_real, position_target, number_of_robots, id_robot, position_initial):
 
@@ -32,6 +32,7 @@ class auv:
         self.id_contact[self.id_robot] = [1, 1]
         self.position_robot_exact = copy.deepcopy(position_initial)
         self.position_robot_estimate = copy.deepcopy(position_initial)
+        self.range = 135000
 
         # Initialize parameters for motion of robot
         self.step_distance = self.yaml_parameters['step_distance'] * self.scaling
@@ -55,7 +56,7 @@ class auv:
             self.my_belief_target = BELIEF.belief_target_angle(self.size_world, self.my_sensor_target, self.number_of_robots, self.id_robot, self.id_contact)
         self.my_belief_position = BELIEF.belief_position(self.scaling, self.id_robot, self.position_robot_exact, self.position_robot_estimate, self.my_sensor_distance, self.my_sensor_motion, self.number_of_robots)
 
-        self.my_decision = DECISION.decision(self.size_world, self.size_world_real, self.my_belief_target, self.my_belief_position, self.id_robot, self.id_contact, self.position_robot_estimate, self.my_sensor_target, self.path_depth, self.number_of_directions, self.step_distance)
+        self.my_decision = DECISION.decision(self.size_world, self.size_world_real, self.my_sensor_target, self.my_belief_target, self.my_belief_position, self.id_robot, self.id_contact, self.position_robot_estimate, self.path_depth, self.number_of_directions, self.step_distance)
 
 
     def update_exact(self, angle_step_distance):

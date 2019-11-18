@@ -183,14 +183,25 @@ class sensor_motion:
 
     def sense(self, angle_step_distance):
         # My measurement will be a bit off the true x and y position
-        distance_x = np.linspace(- 5 * self.step_distance, 5 * self.step_distance, 100 / self.std_v)
-        distance_y = np.linspace(- 5 * self.step_distance, 5 * self.step_distance, 100 / self.std_v)
-
         likelihood_x = self.likelihood_x(angle_step_distance)
         likelihood_y = self.likelihood_y(angle_step_distance)
 
+        distance_x = np.linspace(likelihood_x[0] - 10 * likelihood_x[1], likelihood_x[0] + 10 * likelihood_x[1], 1000)
+        distance_y = np.linspace(likelihood_y[0] - 10 * likelihood_y[1], likelihood_y[0] + 10 * likelihood_y[1], 1000)
+
         cdf_x = self.cdf(distance_x, likelihood_x)
         cdf_y = self.cdf(distance_y, likelihood_y)
+
+        '''plt.scatter(distance_x, cdf_x)
+        plt.xlim(likelihood_x[0] - 10 * likelihood_x[1], likelihood_x[0] + 10 * likelihood_x[1])
+        plt.title(100 / self.std_v)
+        plt.savefig('test_scatter.png')
+        plt.close()
+
+        plt.plot(distance_x, cdf_x)
+        plt.title(100 / self.std_v)
+        plt.savefig('test_plot.png')
+        plt.close()'''
 
         idx_x = self.find_nearest(cdf_x, np.random.random_sample(1))
         idx_y = self.find_nearest(cdf_y, np.random.random_sample(1))
@@ -200,6 +211,8 @@ class sensor_motion:
 
         result_phi = np.arctan2(result_y, result_x)
         result_r = np.sqrt(result_x ** 2 + result_y ** 2)
+
+        #print(np.min([abs(angle_step_distance[0] - result_phi), abs(2 * np.pi + angle_step_distance[0] - result_phi), abs(- 2 * np.pi + angle_step_distance[0] - result_phi)]),abs(result_r-angle_step_distance[1]))
 
         return [result_phi, result_r]
 
@@ -278,7 +291,7 @@ class sensor_distance:
     def sense(self, id_robot):
         mean = np.sqrt((self.position_robot_exact[self.id_robot][0] - self.position_robot_exact[id_robot][0]) ** 2 + (self.position_robot_exact[self.id_robot][1] - self.position_robot_exact[id_robot][1]) ** 2)
         likelihood = self.likelihood(mean)
-        distance = np.linspace(0.000001, self.distance_max - 1, 10 * int(self.distance_max))
+        distance = np.linspace(0.000001, self.distance_max, 10 * int(self.distance_max))
         cdf = self.cdf(distance, likelihood)
 
         # Make the measurement

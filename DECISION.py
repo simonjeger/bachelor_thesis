@@ -7,7 +7,7 @@ import yaml
 
 class decision:
 
-    def __init__(self, size_world, size_world_real, my_belief_target, my_belief_position, id_robot, id_contact, position_robot_estimate, my_sensor_target, path_depth, number_of_directions, step_distance):
+    def __init__(self, size_world, size_world_real, my_sensor_target, my_belief_target, my_belief_position, id_robot, id_contact, position_robot_estimate, path_depth, number_of_directions, step_distance):
 
         # Get yaml parameter
         parser = argparse.ArgumentParser()
@@ -21,6 +21,7 @@ class decision:
         self.size_world = size_world
         self.size_world_real = size_world_real
         self.scaling = size_world[0] / size_world_real[0]
+        self.my_sensor_target = my_sensor_target
         self.my_belief_target = my_belief_target
         self.my_belief_position = my_belief_position
         self.position_robot_estimate = position_robot_estimate
@@ -36,7 +37,13 @@ class decision:
 
         # Parameters that determine when to rise to the surface
         self.diving_depth = self.yaml_parameters['diving_depth']
-        self.rise_gain_initial = 0 - self.yaml_parameters['rise_time']
+        if self.yaml_parameters['rise_time'] == '':
+            interval = self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate']
+            diagonal = np.sqrt(self.yaml_parameters['size_world'][0] ** 2 + self.yaml_parameters['size_world'][1] ** 2) - self.yaml_parameters['cross_over'] * 1.3
+            self.rise_gain_initial = 0 - np.floor(diagonal / interval)
+
+        else:
+            self.rise_gain_initial = 0 - self.yaml_parameters['rise_time']
         self.rise_gain = self.rise_gain_initial
 
 
@@ -120,7 +127,7 @@ class decision:
 
                         # If path leads outside of world
                         if (position_observe[layer][i][0] < 0) | (position_observe[layer][i][0] >= self.size_world[0]) | (position_observe[layer][i][1] < 0) | (position_observe[layer][i][1] >= self.size_world[1]):
-                            value[layer][i] = 0
+                            value[layer][i] = - 1
 
                         # Rate every path through marginalisation
                         else:
@@ -167,6 +174,7 @@ class decision:
                                 self.rise_gain = self.rise_gain_initial
 
             if self.rise_gain < 0:
+
                 # Choose path
                 my_layer = (self.path_depth - 1) * len(id_robot) + len(id_robot) - id_robot.index(self.id_robot) - 1
                 choice = int(np.argmax(value[-1]) / ((self.number_of_directions) ** my_layer)) % self.number_of_directions
@@ -301,7 +309,7 @@ class decision:
 
                             # If path leads outside of world
                             if (position_observe[layer][int(p / 2)][0] < 0) | (position_observe[layer][int(p / 2)][0] >= self.size_world[0]) | (position_observe[layer][int(p / 2)][1] < 0) | (position_observe[layer][int(p / 2)][1] >= self.size_world[1]):
-                                value[layer][i] = 0
+                                value[layer][i] = - 1
                             else:
                                 value[layer][i] = value[layer][i] + weight[layer][p] * self.kullback_leibler(belief_state_future[layer][p], self.my_belief_target.belief_state) + weight[layer][p + 1] * self.kullback_leibler(belief_state_future[layer][p + 1], self.my_belief_target.belief_state)
 
