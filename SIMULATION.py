@@ -116,7 +116,7 @@ class simulation:
         if self.yaml_parameters['max_runtime'] == '':
             max_runtime = self.my_robot[-1].range / (self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate'])
         else:
-            max_runtime = self.yaml_parameters['max_runtime']
+            max_runtime = self.yaml_parameters['max_runtime'] * self.scaling
 
         while (np.max(belief_maximum) < max_belief) & (i < max_runtime):
 
@@ -238,7 +238,7 @@ class simulation:
                             self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
 
             # Increase runtime counter
-            i = i + 1
+            i = i + self.my_robot[-1].step_distance
 
             # How long it takes to compute everything
             self.time_computation = self.time_computation + (time.time() - self.time_start)
