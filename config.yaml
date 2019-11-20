@@ -3,16 +3,15 @@ name_of_simulation: 'test'
 size_world: [50000, 50000]
 resolution: [40, 40]
 position_initial: [[0, 0], [0, 50000], [50000, 0]]
-position_initial: [[0, 0], [0, 50000], [50000, 0]]
 position_target: 'random'
 max_belief: 1500
 max_runtime: 300000
 
 # parameter_robot
+deciding_rate: 10 #steps/decision
+step_distance: 200
 #deciding_rate: 1000 #steps/decision
 #step_distance: 2
-deciding_rate: 10 #steps/decision
-step_distance: 80
 number_of_directions: 8
 path_depth: 1
 communication_range_observation: 5000
@@ -38,6 +37,9 @@ std_mean: 0.001
 # parameter_belief_position
 std_x: 100
 std_y: 100
+
+# parameter belief
+lower_bound: ''
 
 # parameter_decision
 decision: 'expensive'

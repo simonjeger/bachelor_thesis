@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import cv2
 import os
+import shutil
 import argparse
 import yaml
 
@@ -91,7 +92,12 @@ class result:
             for y in range(len(self.my_robot)):
                 if y == self.my_robot[x].id_robot:
                     my_belief_position[y] = self.build_xy(self.my_robot[x].my_belief_position.belief_state[y])
+
                 else:
+                    # Increase uncertainty because my position where I observe from, is uncertain as well
+                    self.my_robot[x].my_belief_position.belief_state[y][0][1] = np.sqrt(self.my_robot[x].my_belief_position.belief_state[y][0][1] ** 2 + (self.my_robot[x].my_belief_position.belief_state[x][0][1] / self.my_robot[x].my_belief_position.belief_state[y][1][0]) ** 2)
+                    self.my_robot[x].my_belief_position.belief_state[y][1][1] = np.sqrt(self.my_robot[x].my_belief_position.belief_state[y][1][1] ** 2 + self.my_robot[x].my_belief_position.belief_state[x][0][1] ** 2)
+
                     my_belief_position[y] = self.build_rphi(self.my_robot[x].position_robot_estimate[x], self.my_robot[x].my_belief_position.belief_state[y])
 
             # Belief_state_target
@@ -187,4 +193,4 @@ class result:
         # Delete folder of pictures
         for i in range(self.picture_id):
             os.remove('./' + self.path + '/construction/' + str(i) + '.png')
-        os.rmdir(self.path + '/construction')
+        shutil.rmtree(self.path + '/construction')

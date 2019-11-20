@@ -167,12 +167,15 @@ class sensor_motion:
         self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
-        self.std_v = self.yaml_parameters['std_v'] * self.step_distance
-        self.std_move = self.gaussian_approx()
+        self.std_v = self.yaml_parameters['std_v'] * np.sqrt(self.step_distance)
+        self.std_move = self.gaussian_approx() * np.sqrt(self.step_distance)
+
 
     def gaussian_approx(self):
-        m = [- self.step_distance, 0, self.step_distance]
-        s = [self.std_v, self.std_v, self.std_v]
+        step_distance_norm = 1
+        std_v_norm = self.yaml_parameters['std_v']
+        m = [- step_distance_norm, step_distance_norm]
+        s = [std_v_norm, std_v_norm]
         p = self.gaussian(m, [m, s])
         p_n = p / np.sum(p)
 
@@ -180,6 +183,7 @@ class sensor_motion:
         s_new = np.sqrt(p_n.dot(np.power(s, 2) + np.power(m, 2)) - np.power(p_n.dot(m), 2))
 
         return s_new
+
 
     def sense(self, angle_step_distance):
         # My measurement will be a bit off the true x and y position
@@ -192,17 +196,6 @@ class sensor_motion:
         cdf_x = self.cdf(distance_x, likelihood_x)
         cdf_y = self.cdf(distance_y, likelihood_y)
 
-        '''plt.scatter(distance_x, cdf_x)
-        plt.xlim(likelihood_x[0] - 10 * likelihood_x[1], likelihood_x[0] + 10 * likelihood_x[1])
-        plt.title(100 / self.std_v)
-        plt.savefig('test_scatter.png')
-        plt.close()
-
-        plt.plot(distance_x, cdf_x)
-        plt.title(100 / self.std_v)
-        plt.savefig('test_plot.png')
-        plt.close()'''
-
         idx_x = self.find_nearest(cdf_x, np.random.random_sample(1))
         idx_y = self.find_nearest(cdf_y, np.random.random_sample(1))
 
@@ -211,8 +204,6 @@ class sensor_motion:
 
         result_phi = np.arctan2(result_y, result_x)
         result_r = np.sqrt(result_x ** 2 + result_y ** 2)
-
-        #print(np.min([abs(angle_step_distance[0] - result_phi), abs(2 * np.pi + angle_step_distance[0] - result_phi), abs(- 2 * np.pi + angle_step_distance[0] - result_phi)]),abs(result_r-angle_step_distance[1]))
 
         return [result_phi, result_r]
 
@@ -248,7 +239,7 @@ class sensor_motion:
 
 
     def picture_save(self):
-        # Initalize both axis
+        # Displacement
         x = np.linspace(0, 2 * self.step_distance, int(self.distance_max / self.scaling))
         y = self.gaussian(x, self.likelihood_x([0, self.step_distance]))
 
@@ -258,10 +249,29 @@ class sensor_motion:
         plt.xlim((0, 2 * self.step_distance / self.scaling))
         plt.ylabel('Likelihood')
         #plt.ylim((0, 1))
-        plt.title('sensor_motion')
+        plt.title('sensor_motion_displacement')
 
         # Save picture in main folder
-        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_motion.png')
+        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_motion_displacement.png')
+        plt.close()
+
+        # Approximation
+        x = np.linspace(- 2, 2, 10000)
+        y_0 = self.gaussian(x, [- 1, self.std_v / np.sqrt(self.step_distance)])
+        y_1 = self.gaussian(x, [1, self.std_v / np.sqrt(self.step_distance)])
+        y_a = self.gaussian(x, [0, self.std_move / np.sqrt(self.step_distance)])
+
+        # Plot sensor model
+        plt.plot(x, y_0 + y_1)
+        plt.plot(x, y_a)
+        plt.xlabel('Change in position in e_x')
+        plt.xlim((- 2, 2))
+        plt.ylabel('Likelihood')
+        plt.ylim((0, 1))
+        plt.title('sensor_motion_approximation')
+
+        # Save picture in main folder
+        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_motion_approximation.png')
         plt.close()
 
 

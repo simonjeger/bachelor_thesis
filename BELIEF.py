@@ -7,6 +7,14 @@ class belief_target_boolean:
 
     def __init__(self, size_world, my_sensor_target, number_of_robots, id_robot, id_contact):
 
+        # Get yaml parameter
+        parser = argparse.ArgumentParser()
+        parser.add_argument('yaml_file')
+        args = parser.parse_args()
+
+        with open(args.yaml_file, 'rt') as fh:
+            self.yaml_parameters = yaml.safe_load(fh)
+
         # Initialize
         self.size_world = size_world
         self.my_sensor_target = my_sensor_target
@@ -62,6 +70,14 @@ class belief_target_boolean:
 
                 # Update belief
                 self.belief_state = posterior
+
+                # Set lower limit for numbers, otherwise numerical errors
+                if self.yaml_parameters['lower_bound'] == '':
+                    lower_bound, upper_bound = 1e-40, 1
+                else:
+                    lower_bound, upper_bound = self.yaml_parameters['lower_bound'], 1
+
+                self.belief_state = np.clip(self.belief_state, lower_bound, upper_bound)
 
                 # Now we'll normalize (target must be here somewhere...)
                 self.belief_state = self.belief_state / self.belief_state.sum()
@@ -133,6 +149,14 @@ class belief_target_angle:
 
     def __init__(self, size_world, my_sensor_target, number_of_robots, id_robot, id_contact):
 
+        # Get yaml parameter
+        parser = argparse.ArgumentParser()
+        parser.add_argument('yaml_file')
+        args = parser.parse_args()
+
+        with open(args.yaml_file, 'rt') as fh:
+            self.yaml_parameters = yaml.safe_load(fh)
+
         # Initialize
         self.size_world = size_world
         self.my_sensor_target = my_sensor_target
@@ -203,6 +227,13 @@ class belief_target_angle:
 
                 # Update belief
                 self.belief_state = posterior
+
+                # Set lower limit for numbers, otherwise numerical errors
+                if self.yaml_parameters['lower_bound'] == '':
+                    lower_bound, upper_bound = 1e-40, 1
+                else:
+                    lower_bound, upper_bound = self.yaml_parameters['lower_bound'], 1
+                self.belief_state = np.clip(self.belief_state, lower_bound, upper_bound)
 
                 # Now we'll normalize (target must be here somewhere...)
                 self.belief_state = self.belief_state / self.belief_state.sum()
@@ -300,6 +331,7 @@ class belief_position:
 
         self.belief_state[self.id_robot] = [[self.mean_x, self.std_x], [self.mean_y, self.std_y]]
 
+
     def initialize_neighbour(self, id_robot, belief_state):
         dx = belief_state[0][0] - self.position_robot_estimate[self.id_robot][0]
         dy = belief_state[1][0] - self.position_robot_estimate[self.id_robot][1]
@@ -326,6 +358,7 @@ class belief_position:
         self.belief_state[self.id_robot][0] = posterior_x
         self.belief_state[self.id_robot][1] = posterior_y
 
+
     def update_neighbour(self):
         for x in range(self.number_of_robots):
             if x != self.id_robot:
@@ -350,11 +383,7 @@ class belief_position:
                 velocity_vector_r = [prior_r[0], self.my_sensor_motion.std_move]
 
                 new_prior_phi = [prior_phi[0], np.sqrt(prior_phi[1] ** 2 + velocity_vector_phi[1] ** 2)]
-
                 new_prior_r = [prior_r[0], np.sqrt(prior_r[1] ** 2 + velocity_vector_r[1] ** 2)]
-
-                self.belief_state[x][0] = new_prior_phi
-                self.belief_state[x][1] = new_prior_r
 
                 # Make measurement update
                 if measurement != 'no_measurement':
@@ -366,10 +395,6 @@ class belief_position:
 
                 posterior_phi = new_prior_phi
                 posterior_r = [new_mean_r, new_std_r]
-
-                # Increase uncertainty because my position where I observe from, is uncertain as well
-                posterior_phi[1] = np.sqrt(posterior_phi[1] ** 2 + (self.belief_state[self.id_robot][0][1] / posterior_r[0]) ** 2)
-                posterior_r[1] = np.sqrt(posterior_r[1] ** 2 + self.belief_state[self.id_robot][0][1] ** 2)
 
                 self.belief_state[x][0] = posterior_phi
                 self.belief_state[x][1] = posterior_r
