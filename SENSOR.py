@@ -349,7 +349,7 @@ class sensor_distance:
         # Plot likelyhood for n different means
         n = 5
         for i in range(0, n):
-            y = self.gaussian(x, self.likelihood(self.distance_max * i / n))
+            y = self.gaussian(x, self.likelihood(self.communication_range_neighbour * i / n))
             plt.plot(x / self.scaling, y * self.scaling)
 
         plt.xlabel('Distance between robots')

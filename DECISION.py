@@ -46,6 +46,10 @@ class decision:
             self.rise_gain_initial = 0 - self.yaml_parameters['rise_time']
         self.rise_gain = self.rise_gain_initial
 
+        # Parameter for lawnmower
+        self.i_step = - int(self.my_sensor_target.cross_over) - 1
+        self.angle_step_distance = [np.pi / 2, self.step_distance / self.yaml_parameters['deciding_rate']]
+
 
     def decide_cheap(self):
         # Am I on the same depth level as the rest
@@ -345,6 +349,27 @@ class decision:
                 self.rise_gain = self.rise_gain_initial + 2 * self.diving_depth
                 self.id_contact[-1][0] = 2 * self.diving_depth
                 return [0, 0]
+
+
+    def decide_lawnmower(self):
+        self.i_step = self.i_step + 1
+        len_x = int(2 * self.my_sensor_target.cross_over)
+        len_y = int(self.size_world[1] / self.step_distance) - len_x + 1
+        a = len_y - int(self.id_robot * len_x / 2)
+        b = a + len_x + (len(self.id_contact) - 2 - self.id_robot) * len_x
+        c = b + len_y - int((len(self.id_contact ) - 2) * len_x / 2)
+        d = c + len_x + self.id_robot * len_x
+        if self.i_step == a:
+            self.angle_step_distance[0] = self.angle_step_distance[0] - np.pi / 2
+        if self.i_step == b:
+            self.angle_step_distance[0] = self.angle_step_distance[0] - np.pi / 2
+        if self.i_step == c:
+            self.angle_step_distance[0] = self.angle_step_distance[0] + np.pi / 2
+        if self.i_step == d:
+            self.angle_step_distance[0] = self.angle_step_distance[0] + np.pi / 2
+            self.i_step = 0
+
+        return self.angle_step_distance
 
 
     def kullback_leibler(self, x, y):

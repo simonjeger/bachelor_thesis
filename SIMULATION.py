@@ -143,6 +143,8 @@ class simulation:
                         angle_step_distance[x] = self.my_robot[x].my_decision.decide_cheap()
                     if self.yaml_parameters['decision'] == 'expensive':
                         angle_step_distance[x] = self.my_robot[x].my_decision.decide_expensive()
+                    if self.yaml_parameters['decision'] == 'lawnmower':
+                        angle_step_distance[x] = self.my_robot[x].my_decision.decide_lawnmower()
 
             else:
                 self.d = self.d + 1
