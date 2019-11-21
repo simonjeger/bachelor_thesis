@@ -1,16 +1,19 @@
 # parameter_simulation
 name_of_simulation: 'test'
 size_world: [50000, 50000]
-resolution: [60, 60]
+resolution: [90, 90]
+#position_initial: [[0, 0], [7000, 0], [14000, 0]]
 position_initial: [[0, 0]]
-position_target: 'random'
-max_belief: 1500
+#position_target: 'random'
+position_target: [50000, 50000]
+max_belief: 0.99
 max_runtime: 360000
+max_error: 0
 
 # parameter_robot
-deciding_rate: 1000 #steps/decision
+deciding_rate: 333 #steps/decision
 step_distance: 1.5
-number_of_directions: 16
+number_of_directions: 8
 path_depth: 1
 communication_range_observation: 5000
 communication_range_neighbour: 9500
@@ -20,8 +23,7 @@ cross_over: 3500
 width: 180
 smoothness: 6
 max_pos: 0.9
-#max_neg: 0.1
-max_neg: 0.005
+max_neg: 0.1
 std_angle: 3
 
 # parameter_sensor_motion
@@ -41,7 +43,6 @@ lower_bound: ''
 # parameter_decision
 decision: 'lawnmower'
 rise_gain: 'on'
-#rise_time: 66
 rise_time: ''
-rise_n: 5
+rise_n: ''
 diving_depth: 1

@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import copy
 import os
 import time
@@ -111,7 +112,7 @@ class simulation:
 
         # Looking for target until belief_state is accurate enough or runtime max is reached
         i = 0
-        max_belief = self.yaml_parameters['max_belief'] / (self.size_world[0] * self.size_world[1])
+        max_belief = self.yaml_parameters['max_belief']
 
         if self.yaml_parameters['max_runtime'] == '':
             max_runtime = self.my_robot[-1].range / (self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate'])
@@ -127,6 +128,9 @@ class simulation:
             belief_maximum = [0] * len(self.my_robot)
             for x in range(len(self.my_robot)):
                 belief_maximum[x] = np.max(self.my_robot[x].my_belief_target.belief_state)
+
+            # Determine which robot has the best estimate for the performance analysis
+            self.performance_id_leader = np.argmax(belief_maximum)
 
             # Update all position estimates based on my belief
             for x in range(len(self.my_robot)):
@@ -176,37 +180,37 @@ class simulation:
             # Update homebase_belief_state
             self.my_homebase.my_belief_position.update()
 
-            #if self.d >= self.yaml_parameters['deciding_rate']:
-            # Exchange belief if close enough
-            distance_estimate = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
-            distance_exact = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
+            if self.d >= self.yaml_parameters['deciding_rate'] - 1:
+                # Exchange belief if close enough just one step before taking a decision
+                distance_estimate = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
+                distance_exact = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
 
-            for x in range(len(self.my_robot)):
-                for y in range(len(self.my_robot)):
+                for x in range(len(self.my_robot)):
+                    for y in range(len(self.my_robot)):
 
-                    # I don't have to look how far away I am from myself
-                    if (x != y):
+                        # I don't have to look how far away I am from myself
+                        if (x != y):
 
-                        # Do I think we are close enough, does my neighbour think that too & are we actually close enough & isn't he rising to the surface?
-                        distance_estimate[x][y] = self.my_robot[x].my_belief_position.belief_state[y][1][0]
-                        distance_exact[x][y] = np.sqrt((self.my_robot[x].position_robot_exact[x][0] - self.my_robot[x].position_robot_exact[y][0]) ** 2 + (self.my_robot[x].position_robot_exact[x][1] - self.my_robot[x].position_robot_exact[y][1]) ** 2)
+                            # Do I think we are close enough, does my neighbour think that too & are we actually close enough & isn't he rising to the surface?
+                            distance_estimate[x][y] = self.my_robot[x].my_belief_position.belief_state[y][1][0]
+                            distance_exact[x][y] = np.sqrt((self.my_robot[x].position_robot_exact[x][0] - self.my_robot[x].position_robot_exact[y][0]) ** 2 + (self.my_robot[x].position_robot_exact[x][1] - self.my_robot[x].position_robot_exact[y][1]) ** 2)
 
-                        if (distance_estimate[x][y] < self.my_robot[x].communication_range_observation) & (distance_exact[x][y] < self.my_robot[x].communication_range_observation) & (self.my_robot[y].id_contact[-1][0] == 0):
-                            self.my_robot[x].id_contact[y][0] = 1
-                            self.my_robot[y].id_contact[x][1] = 1
+                            if (distance_estimate[x][y] < self.my_robot[x].communication_range_observation) & (distance_exact[x][y] < self.my_robot[x].communication_range_observation) & (self.my_robot[y].id_contact[-1][0] == 0):
+                                self.my_robot[x].id_contact[y][0] = 1
+                                self.my_robot[y].id_contact[x][1] = 1
 
-                            # Update the position estimate of my neighbour about me
-                            self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
+                                # Update the position estimate of my neighbour about me
+                                self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
 
-                            # Merge all the logs, if they contain more information than I already know
-                            for z in range(len(self.my_robot)):
-                                if len(self.my_robot[x].my_belief_target.position_log_estimate[z]) < len(self.my_robot[y].my_belief_target.position_log_estimate[z]):
-                                    self.my_robot[x].my_belief_target.merge(z, self.my_robot[y].my_belief_target.position_log_estimate[z], self.my_robot[y].my_belief_target.observation_log[z])
+                                # Merge all the logs, if they contain more information than I already know
+                                for z in range(len(self.my_robot)):
+                                    if len(self.my_robot[x].my_belief_target.position_log_estimate[z]) < len(self.my_robot[y].my_belief_target.position_log_estimate[z]):
+                                        self.my_robot[x].my_belief_target.merge(z, self.my_robot[y].my_belief_target.position_log_estimate[z], self.my_robot[y].my_belief_target.observation_log[z])
 
-                        # If they are not close enough to communicate, they don't have contact
-                        else:
-                            self.my_robot[x].id_contact[y][0] = 0
-                            self.my_robot[y].id_contact[x][1] = 0
+                            # If they are not close enough to communicate, they don't have contact
+                            else:
+                                self.my_robot[x].id_contact[y][0] = 0
+                                self.my_robot[y].id_contact[x][1] = 0
 
             for x in range(len(self.my_robot)):
                 if self.my_robot[x].id_contact[-1][0] == self.my_robot[x].my_decision.diving_depth:
@@ -258,27 +262,50 @@ class simulation:
         # Update cicle dependent parameters
         self.cicle = self.cicle + 1
 
-        self.performance_position_target = self.performance_position_target + [self.position_target]
-        self.performance_number_of_iteration = self.performance_number_of_iteration + [self.my_result.picture_id]
+        arg_x = np.argmax(self.my_robot[self.performance_id_leader].my_belief_target.belief_state) % self.size_world[0]
+        arg_y = np.floor(np.argmax(self.my_robot[self.performance_id_leader].my_belief_target.belief_state) / self.size_world[1])
+
+        if i >= max_runtime:
+            self.performance_position_target = self.performance_position_target + [[self.position_target[0], self.position_target[1], 'max_runtime']]
+
+        elif np.sqrt((arg_x - self.position_target[0]) ** 2 + (arg_y - self.position_target[1]) ** 2) > self.yaml_parameters['max_error']:
+            self.performance_position_target = self.performance_position_target + [[self.position_target[0], self.position_target[1], 'max_error']]
+
+        else:
+            self.performance_position_target = self.performance_position_target + [[self.position_target[0], self.position_target[1], 'normal']]
+
+        self.performance_number_of_iteration = self.performance_number_of_iteration + [(self.my_result.picture_id - 1) * self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate']]
 
         self.performance_time_computation = self.performance_time_computation + [self.time_computation / (i + 1)]
         self.performance_time_picture = self.performance_time_picture + [self.time_picture / (i + 1)]
 
     def performance_target_position(self):
-        # Initializing performance_map
+        # Initializing performance_map and the figure it belongs to
         performance_map = [[0 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
 
         # Filling performance_map
         for i in range(len(self.performance_position_target)):
-            performance_map[self.performance_position_target[i][1]][self.performance_position_target[i][0]] = self.performance_number_of_iteration[i]
+
+            if self.performance_position_target[i][2] == 'max_error':
+                tar = patches.Circle(np.divide([self.performance_position_target[i][0], self.performance_position_target[i][1]], self.scaling), radius=self.my_result.size_point * 5, color='firebrick', fill=True)
+                ax.add_patch(tar)
+
+            if self.performance_position_target[i][2] == 'max_runtime':
+                tar = patches.Circle(np.divide([self.performance_position_target[i][0], self.performance_position_target[i][1]], self.scaling), radius=self.my_result.size_point * 5, color='tomato', fill=True)
+                ax.add_patch(tar)
+
+            if self.performance_position_target[i][2] == 'normal':
+                performance_map[self.performance_position_target[i][1]][self.performance_position_target[i][0]] = self.performance_number_of_iteration[i]
 
         # Creating visual representation of performance_map
-        plt.imshow(performance_map, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
-        plt.colorbar()
-        plt.title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average: ' + str(np.sum(self.performance_number_of_iteration) / self.cicle))
+        im = ax.imshow(performance_map, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
+        fig.colorbar(im)
+        ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average: ' + str(np.sum(self.performance_number_of_iteration) / self.cicle))
 
         # Save picture in main folder
-        plt.savefig(self.path + '/performance/' + self.path + '_performance_target_position.png')
+        fig.savefig(self.path + '/performance/' + self.path + '_performance_target_position.png')
         plt.close()
 
 

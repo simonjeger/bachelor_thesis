@@ -47,7 +47,7 @@ class decision:
         self.rise_gain = self.rise_gain_initial
 
         # Parameter for lawnmower
-        self.i_step = - int(self.my_sensor_target.cross_over) - 1
+        self.i_step = - self.my_sensor_target.cross_over / self.step_distance - (len(self.id_contact) - 2 - self.id_robot) * 2 * self.my_sensor_target.cross_over / self.step_distance
         self.angle_step_distance = [np.pi / 2, self.step_distance / self.yaml_parameters['deciding_rate']]
 
 
@@ -162,20 +162,7 @@ class decision:
                         value[layer][i] = value[layer][i] + value[layer-1][int(i / (self.number_of_directions))]
 
             # Update rise_gain
-            if (self.yaml_parameters['rise_gain'] == 'on') & (len(self.id_contact) > 2): # It doesn't make sense for one robot to surface
-                self.rise_gain = self.rise_gain + 1
-
-                # Do not surface if you've seen the target in the past n steps
-                n = self.yaml_parameters['rise_n']
-                if self.rise_gain >= 0:
-                    if len(self.my_belief_target.observation_log[self.id_robot]) < n:
-                        for test in self.my_belief_target.observation_log[self.id_robot]:
-                            if test != 'no_measurement':
-                                self.rise_gain = self.rise_gain_initial
-                    else:
-                        for test in self.my_belief_target.observation_log[self.id_robot][-n::]:
-                            if test != 'no_measurement':
-                                self.rise_gain = self.rise_gain_initial
+            self.update_rise_gain()
 
             if self.rise_gain < 0:
 
@@ -318,24 +305,7 @@ class decision:
                                 value[layer][i] = value[layer][i] + weight[layer][p] * self.kullback_leibler(belief_state_future[layer][p], self.my_belief_target.belief_state) + weight[layer][p + 1] * self.kullback_leibler(belief_state_future[layer][p + 1], self.my_belief_target.belief_state)
 
             # Update rise_gain
-            if (self.yaml_parameters['rise_gain'] == 'on') & (len(self.id_contact) > 2) & (self.rise_gain_initial + 2 * self.diving_depth < 0):
-                # Surfacing has to be turned on
-                # It doesn't make sense to surface in a single robot mission
-                # Dependent on the depth at some point it doesn't make sense to surface anymore because it takes too long
-
-                self.rise_gain = self.rise_gain + 1
-
-                # Do not surface if you've seen the target in the past n steps
-                n = self.yaml_parameters['rise_n']
-                if self.rise_gain >= 0:
-                    if len(self.my_belief_target.observation_log[self.id_robot]) < n:
-                        for test in self.my_belief_target.observation_log[self.id_robot]:
-                            if test != 'no_measurement':
-                                self.rise_gain = self.rise_gain_initial
-                    else:
-                        for test in self.my_belief_target.observation_log[self.id_robot][-n::]:
-                            if test != 'no_measurement':
-                                self.rise_gain = self.rise_gain_initial
+            self.update_rise_gain()
 
             if self.rise_gain < 0:
                 # Choose path
@@ -353,21 +323,23 @@ class decision:
 
     def decide_lawnmower(self):
         self.i_step = self.i_step + 1
-        len_x = int(2 * self.my_sensor_target.cross_over)
-        len_y = int(self.size_world[1] / self.step_distance) - len_x + 1
-        a = len_y - int(self.id_robot * len_x / 2)
-        b = a + len_x + (len(self.id_contact) - 2 - self.id_robot) * len_x
-        c = b + len_y - int((len(self.id_contact ) - 2) * len_x / 2)
-        d = c + len_x + self.id_robot * len_x
-        if self.i_step == a:
-            self.angle_step_distance[0] = self.angle_step_distance[0] - np.pi / 2
-        if self.i_step == b:
-            self.angle_step_distance[0] = self.angle_step_distance[0] - np.pi / 2
-        if self.i_step == c:
-            self.angle_step_distance[0] = self.angle_step_distance[0] + np.pi / 2
-        if self.i_step == d:
-            self.angle_step_distance[0] = self.angle_step_distance[0] + np.pi / 2
+        len_x = self.my_sensor_target.cross_over / self.step_distance
+        len_y = self.size_world[1] / self.step_distance - 2 * len_x
+
+        a = len_y - (len(self.id_contact) - 2) * 2 * len_x
+        b = a + 2 * len_x + (len(self.id_contact) - 2 - self.id_robot) * 4 * len_x
+        c = b + len_y - (len(self.id_contact) - 2) * 2 * len_x
+        d = c + 2 * len_x + self.id_robot * 4 * len_x
+
+        if self.i_step >= d:
+            self.angle_step_distance[0] = np.pi / 2
             self.i_step = 0
+        elif self.i_step >= c:
+            self.angle_step_distance[0] = 0
+        elif self.i_step >= b:
+            self.angle_step_distance[0] = - np.pi / 2
+        elif self.i_step >= a:
+            self.angle_step_distance[0] = 0
 
         return self.angle_step_distance
 
@@ -375,3 +347,32 @@ class decision:
     def kullback_leibler(self, x, y):
         result = np.sum(np.multiply(x, np.log(np.divide(x, y))))
         return result
+
+
+    def update_rise_gain(self):
+        if (self.yaml_parameters['rise_gain'] == 'on') & (len(self.id_contact) > 2) & (self.rise_gain_initial + 2 * self.diving_depth < 0):
+            # Surfacing has to be turned on
+            # It doesn't make sense to surface in a single robot mission
+            # Dependent on the depth at some point it doesn't make sense to surface anymore because it takes too long
+
+            self.rise_gain = self.rise_gain + 1
+
+            # Do not surface if you've seen the target in the past n steps
+            i_n = 0
+            if self.yaml_parameters['rise_n'] == '':
+                n = 2 * self.yaml_parameters['deciding_rate'] * self.my_sensor_target.max_neg
+            else:
+                n = self.yaml_parameters['rise_n']
+
+            if self.rise_gain >= 0:
+                if len(self.my_belief_target.observation_log[self.id_robot]) < self.yaml_parameters['deciding_rate']:
+                    for test in self.my_belief_target.observation_log[self.id_robot]:
+                        if test != 'no_measurement':
+                            i_n = i_n + 1
+                else:
+                    for test in self.my_belief_target.observation_log[self.id_robot][-self.yaml_parameters['deciding_rate']::]:
+                        if test != 'no_measurement':
+                            i_n = i_n + 1
+
+                if i_n >= n:
+                    self.rise_gain = self.rise_gain_initial

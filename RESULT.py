@@ -31,7 +31,8 @@ class result:
         self.my_homebase = my_homebase
         self.picture_id = 0
 
-        self.size_point = 1 / 150 * np.sqrt(self.size_world_real[0]**2 + self.size_world_real[1]**2) # circa 0.943
+        #self.size_point = 1 / 150 * np.sqrt(self.size_world_real[0]**2 + self.size_world_real[1]**2) # circa 0.943
+        self.size_point = 1 / 1000 * np.sqrt(self.size_world_real[0] ** 2 + self.size_world_real[1] ** 2)  # circa 0.943
 
         # Generate new folder
         os.makedirs(self.path + '/construction', exist_ok=True)
@@ -109,13 +110,13 @@ class result:
 
                 # Rising sign
             if self.my_robot[x].id_contact[-1][0] != 0:
-                ris = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point * 3, color=color_robot, fill=False)
+                ris = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point * 10, color=color_robot, fill=False)
                 ax[x, 0].add_patch(ris)
 
                 # Path of past positions (only make a dot when I take a decision)
             pas = []
             for i in range(int(len(self.my_robot[x].my_belief_target.position_log_estimate[x]) / self.yaml_parameters['deciding_rate'])):
-                pas = pas + [patches.Circle(np.divide(self.my_robot[x].my_belief_target.position_log_estimate[x][i * self.yaml_parameters['deciding_rate']], self.scaling), radius=self.size_point / 5, color=color_robot, fill=True)]
+                pas = pas + [patches.Circle(np.divide(self.my_robot[x].my_belief_target.position_log_estimate[x][i * self.yaml_parameters['deciding_rate']], self.scaling), radius=self.size_point / 2, color=color_robot, fill=True)]
                 ax[x, 0].add_patch(pas[i])
 
                 # Position of target
@@ -143,7 +144,7 @@ class result:
                 nei = patches.Circle((np.divide(self.my_robot[x].position_robot_exact[y], self.scaling)), radius=self.size_point, color=color_neighbour, fill=True)
                 ax[x, y + 1].add_patch(nei)
 
-                nei_b = patches.Circle((np.divide(self.my_robot[x].position_robot_exact[y], self.scaling)), radius=self.size_point / 5, color='black', fill=True)
+                nei_b = patches.Circle((np.divide(self.my_robot[x].position_robot_exact[y], self.scaling)), radius=self.size_point / 2, color='black', fill=True)
                 ax[x, y + 1].add_patch(nei_b)
 
                 pos = patches.Circle((np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling)), radius=self.size_point, color=color_robot, fill=True)
