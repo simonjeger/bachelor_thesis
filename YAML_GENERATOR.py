@@ -6,6 +6,10 @@ os.makedirs(path, exist_ok=True)
 def write(max_runtime, position_initial, number_of_directions, path_depth, decision, rise_gain, diving_depth):
 
     name = str(len(position_initial)) + 'rob_' + str(number_of_directions) + 'dir_' + str(path_depth) + 'pat_' + str(decision[0:3]) + '_' + str(rise_gain) + '_' + str(diving_depth)
+    bsub = 'bsub -W 24:00 -R "rusage[mem=10000]" python SIMULATION.py'
+
+    # Print submit command
+    print(bsub + 'config/' + name + '.yaml')
 
     # Clear file
     file = open(path + '/' + name + '.yaml', "w")

@@ -333,7 +333,7 @@ class decision:
 
         if self.i_step >= d:
             self.angle_step_distance[0] = np.pi / 2
-            self.i_step = 0
+            self.i_step = 1
         elif self.i_step >= c:
             self.angle_step_distance[0] = 0
         elif self.i_step >= b:
