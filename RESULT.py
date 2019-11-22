@@ -32,7 +32,7 @@ class result:
         self.picture_id = 0
 
         #self.size_point = 1 / 150 * np.sqrt(self.size_world_real[0]**2 + self.size_world_real[1]**2) # circa 0.943
-        self.size_point = 1 / 1000 * np.sqrt(self.size_world_real[0] ** 2 + self.size_world_real[1] ** 2)  # circa 0.943
+        self.size_point = 1 / 500 * np.sqrt(self.size_world_real[0] ** 2 + self.size_world_real[1] ** 2)  # circa 0.943
 
         # Generate new folder
         os.makedirs(self.path + '/construction', exist_ok=True)
@@ -120,7 +120,7 @@ class result:
                 ax[x, 0].add_patch(pas[i])
 
                 # Position of target
-            tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=True)
+            tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point * 2, color=color_target, fill=False)
             ax[x, 0].add_patch(tar)
 
             ax[x, 0].set_title('Belief of robot ' + str(x) + ' about target')

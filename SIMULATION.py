@@ -3,6 +3,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from scipy.interpolate import griddata
 import copy
 import os
 import time
@@ -280,33 +281,57 @@ class simulation:
         self.performance_time_picture = self.performance_time_picture + [self.time_picture / (i + 1)]
 
     def performance_target_position(self):
-        # Initializing performance_map and the figure it belongs to
-        performance_map = [[0 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
 
         # Filling performance_map
+        performance_map = [[0 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
         for i in range(len(self.performance_position_target)):
+            performance_map[self.performance_position_target[i][1]][self.performance_position_target[i][0]] = self.performance_number_of_iteration[i]
 
+        # data coordinates and values
+        x = []
+        y = []
+        for i in range(len(self.performance_position_target)):
+            x = x + [self.performance_position_target[i][0] / self.scaling]
+            y = y + [self.performance_position_target[i][1] / self.scaling]
+
+        z = self.performance_number_of_iteration
+
+        # Change into numpy array (otherwise I get an error)
+        x = np.array(x)
+        y = np.array(y)
+        z = np.array(z)
+
+        # Target grid to interpolate to
+        xi = np.linspace(0, self.size_world_real[0], self.size_world[0])
+        yi = np.linspace(self.size_world_real[1], 0, self.size_world[1])
+        xi, yi = np.meshgrid(xi, yi)
+
+        # Interpolate
+        zi = griddata((x, y), z, (xi, yi), method='nearest')
+
+        # Plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.contourf(xi, yi, zi)
+        ax.plot(x, y, 'k.')
+        ax.set_xlim([0, self.size_world[0] / self.scaling])
+        ax.set_ylim([0, self.size_world[1] / self.scaling])
+
+        # Add patches
+        for i in range(len(self.performance_position_target)):
             if self.performance_position_target[i][2] == 'max_error':
-                tar = patches.Circle(np.divide([self.performance_position_target[i][0], self.performance_position_target[i][1]], self.scaling), radius=self.my_result.size_point * 5, color='firebrick', fill=True)
+                tar = patches.Circle(np.divide([self.performance_position_target[i][0], self.performance_position_target[i][1]], self.scaling), radius=self.my_result.size_point, color='salmon', fill=True)
                 ax.add_patch(tar)
 
             if self.performance_position_target[i][2] == 'max_runtime':
-                tar = patches.Circle(np.divide([self.performance_position_target[i][0], self.performance_position_target[i][1]], self.scaling), radius=self.my_result.size_point * 5, color='tomato', fill=True)
+                tar = patches.Circle(np.divide([self.performance_position_target[i][0], self.performance_position_target[i][1]], self.scaling), radius=self.my_result.size_point * 5, color='firebrick', fill=True)
                 ax.add_patch(tar)
 
-            if self.performance_position_target[i][2] == 'normal':
-                performance_map[self.performance_position_target[i][1]][self.performance_position_target[i][0]] = self.performance_number_of_iteration[i]
-
-        # Creating visual representation of performance_map
-        im = ax.imshow(performance_map, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
-        fig.colorbar(im)
-        ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average: ' + str(np.sum(self.performance_number_of_iteration) / self.cicle))
-
-        # Save picture in main folder
+        # Save figure
+        plt.gca().set_aspect('equal', adjustable='box')
+        ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average: ' + str(np.floor(np.sum(self.performance_number_of_iteration) / self.cicle)) + ' over ' + str(self.cicle) + ' cicles')
         fig.savefig(self.path + '/performance/' + self.path + '_performance_target_position.png')
-        plt.close()
+        plt.close(fig)
 
 
     def performance_time(self):
