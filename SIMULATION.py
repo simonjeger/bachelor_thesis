@@ -104,7 +104,8 @@ class simulation:
         self.my_robot[0].my_sensor_distance.picture_save()
 
         # Save picture of the initial belief_state
-        self.my_result.picture_save()
+        if self.yaml_parameters['visual'] == 'on':
+            self.my_result.picture_save()
 
         # Find maximum in belief_state to know when the search is over
         belief_maximum = [0] * len(self.my_robot)
@@ -112,7 +113,7 @@ class simulation:
             belief_maximum[x] = np.max(self.my_robot[x].my_belief_target.belief_state)
 
         # Looking for target until belief_state is accurate enough or runtime max is reached
-        i = 0
+        self.i = 0
         max_belief = self.yaml_parameters['max_belief']
 
         if self.yaml_parameters['max_runtime'] == '':
@@ -120,7 +121,7 @@ class simulation:
         else:
             max_runtime = self.yaml_parameters['max_runtime'] * self.scaling
 
-        while (np.max(belief_maximum) < max_belief) & (i < max_runtime):
+        while (np.max(belief_maximum) < max_belief) & (self.i < max_runtime):
 
             # Start time for performance_time
             self.time_start = time.time()
@@ -245,12 +246,12 @@ class simulation:
                             self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
 
             # Increase runtime counter
-            i = i + self.my_robot[-1].step_distance
+            self.i = self.i + self.my_robot[-1].step_distance
 
             # How long it takes to compute everything
             self.time_computation = self.time_computation + (time.time() - self.time_start)
 
-            if self.d >= self.yaml_parameters['deciding_rate']:
+            if (self.d >= self.yaml_parameters['deciding_rate']) & (self.yaml_parameters['visual'] == 'on'):
                 # Safe picture of the beliefs (target & position) only everytime i take a picture
                 self.my_result.picture_save()
 
@@ -258,7 +259,8 @@ class simulation:
             self.time_picture = self.time_picture + (time.time() - self.time_start)
 
         # Turn saved pictures into video and then delete the pictures
-        self.my_result.video_save()
+        if self.yaml_parameters['visual'] == 'on':
+            self.my_result.video_save()
 
         # Update cicle dependent parameters
         self.cicle = self.cicle + 1
@@ -266,7 +268,7 @@ class simulation:
         arg_x = np.argmax(self.my_robot[self.performance_id_leader].my_belief_target.belief_state) % self.size_world[0]
         arg_y = np.floor(np.argmax(self.my_robot[self.performance_id_leader].my_belief_target.belief_state) / self.size_world[1])
 
-        if i >= max_runtime:
+        if self.i >= max_runtime:
             self.performance_position_target = self.performance_position_target + [[self.position_target[0], self.position_target[1], 'max_runtime']]
 
         elif np.sqrt((arg_x - self.position_target[0]) ** 2 + (arg_y - self.position_target[1]) ** 2) > self.yaml_parameters['max_error']:
@@ -275,10 +277,10 @@ class simulation:
         else:
             self.performance_position_target = self.performance_position_target + [[self.position_target[0], self.position_target[1], 'normal']]
 
-        self.performance_number_of_iteration = self.performance_number_of_iteration + [(self.my_result.picture_id - 1) * self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate']]
+        self.performance_number_of_iteration = self.performance_number_of_iteration + [(self.i - 1) * self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate']]
 
-        self.performance_time_computation = self.performance_time_computation + [self.time_computation / (i + 1)]
-        self.performance_time_picture = self.performance_time_picture + [self.time_picture / (i + 1)]
+        self.performance_time_computation = self.performance_time_computation + [self.time_computation / (self.i + 1)]
+        self.performance_time_picture = self.performance_time_picture + [self.time_picture / (self.i + 1)]
 
     def performance_target_position(self):
 
@@ -303,19 +305,15 @@ class simulation:
 
         # Target grid to interpolate to
         xi = np.linspace(0, self.size_world_real[0], self.size_world[0])
-        yi = np.linspace(self.size_world_real[1], 0, self.size_world[1])
+        yi = np.linspace(0, self.size_world_real[1], self.size_world[1])
         xi, yi = np.meshgrid(xi, yi)
 
         # Interpolate
         zi = griddata((x, y), z, (xi, yi), method='nearest')
 
-        # Plot
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.contourf(xi, yi, zi)
-        ax.plot(x, y, 'k.')
-        ax.set_xlim([0, self.size_world[0] / self.scaling])
-        ax.set_ylim([0, self.size_world[1] / self.scaling])
+        im = ax.imshow(zi, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
 
         # Add patches
         for i in range(len(self.performance_position_target)):
@@ -324,12 +322,17 @@ class simulation:
                 ax.add_patch(tar)
 
             if self.performance_position_target[i][2] == 'max_runtime':
-                tar = patches.Circle(np.divide([self.performance_position_target[i][0], self.performance_position_target[i][1]], self.scaling), radius=self.my_result.size_point * 5, color='firebrick', fill=True)
+                tar = patches.Circle(np.divide([self.performance_position_target[i][0], self.performance_position_target[i][1]], self.scaling), radius=self.my_result.size_point, color='firebrick', fill=True)
+                ax.add_patch(tar)
+
+            if self.performance_position_target[i][2] == 'normal':
+                tar = patches.Circle(np.divide([self.performance_position_target[i][0], self.performance_position_target[i][1]], self.scaling), radius=self.my_result.size_point, color='black', fill=True)
                 ax.add_patch(tar)
 
         # Save figure
+        plt.colorbar(im)
         plt.gca().set_aspect('equal', adjustable='box')
-        ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average: ' + str(np.floor(np.sum(self.performance_number_of_iteration) / self.cicle)) + ' over ' + str(self.cicle) + ' cicles')
+        ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average: ' + str(int(np.sum(self.performance_number_of_iteration) / self.cicle)) + ' over ' + str(self.cicle) + ' cicles')
         fig.savefig(self.path + '/performance/' + self.path + '_performance_target_position.png')
         plt.close(fig)
 

@@ -350,6 +350,7 @@ class decision:
 
 
     def update_rise_gain(self):
+
         if (self.yaml_parameters['rise_gain'] == 'on') & (len(self.id_contact) > 2) & (self.rise_gain_initial + 2 * self.diving_depth < 0):
             # Surfacing has to be turned on
             # It doesn't make sense to surface in a single robot mission
@@ -374,5 +375,5 @@ class decision:
                         if test != 'no_measurement':
                             i_n = i_n + 1
 
-                if i_n >= n:
+                if (i_n >= n):
                     self.rise_gain = self.rise_gain_initial

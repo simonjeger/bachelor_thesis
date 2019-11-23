@@ -4,7 +4,7 @@ import os
 path = 'config'
 os.makedirs(path, exist_ok=True)
 
-def write(max_runtime, position_initial, step_distance, number_of_directions, path_depth, decision, rise_gain, diving_depth):
+def write(visual, max_runtime, position_initial, step_distance, number_of_directions, path_depth, decision, rise_gain, diving_depth):
 
     name = str(len(position_initial)) + 'rob_' + str(number_of_directions) + 'dir_' + str(path_depth) + 'pat_' + str(decision[0:3]) + '_' + str(rise_gain) + '_' + str(diving_depth)
     bsub = 'bsub -W 24:00 -R "rusage[mem=10000]" python SIMULATION.py'
@@ -27,6 +27,7 @@ def write(max_runtime, position_initial, step_distance, number_of_directions, pa
     text = text + "name_of_simulation: " + "'" + 'R_' + name + "'" + '\n'
     text = text + "size_world: [50000, 50000]" + '\n'
     text = text + "resolution: [250, 250]" + '\n'
+    text = text + "visual: '" + str(visual) + "'" + '\n'
     text = text + "position_initial: " + str(position_initial) + '\n'
     text = text + "position_target: 'random'" + '\n'
     text = text + "max_belief: 0.99" + '\n'
@@ -65,8 +66,8 @@ def write(max_runtime, position_initial, step_distance, number_of_directions, pa
     text = text + "lower_bound: ''" + '\n'
     text = text + "" + '\n'
     text = text + "# parameter_decision" + '\n'
-    text = text + "decision: " + str(decision) + '\n'
-    text = text + "rise_gain: " + str(rise_gain) + '\n'
+    text = text + "decision: '" + str(decision) + "'"+ '\n'
+    text = text + "rise_gain: '" + str(rise_gain) + "'" + '\n'
     text = text + "rise_time: ''" + '\n'
     text = text + "rise_n: ''" + '\n'
     text = text + "diving_depth: " + str(diving_depth) + '\n'
@@ -83,6 +84,7 @@ decision_0 = ['expensive', 'cheap']
 decision_1 = ['lawnmower']
 rise_gain_0 = ['on', 'off']
 diving_depth_0 = [2]
+visual = 'off'
 
 # 0
 for a in position_0:
@@ -93,12 +95,12 @@ for a in position_0:
                     for e in rise_gain_0:
                         if (e == 'on'):
                             for f in diving_depth_0:
-                                write(max_runtime[len(a)-1], a, 1.5, b, c, d, e, f)
+                                write(visual, max_runtime[len(a)-1], a, 1.5, b, c, d, e, f)
                         elif (e == 'off'):
-                            write(max_runtime[len(a)-1], a, 1.5, b, c, d, e, 1)
+                            write(visual, max_runtime[len(a)-1], a, 1.5, b, c, d, e, 1)
             else:
-                write(max_runtime[len(a) - 1], a, 1.5, b, c, 'expensive', 'off', 1)
+                write(visual, max_runtime[len(a) - 1], a, 1.5, b, c, 'expensive', 'off', 1)
 
 # 1
 for a in position_1:
-    write(max_runtime[len(a)-1], a, 1, 4, 1, decision_1[0], 'off', 1)
+    write(visual, max_runtime[len(a)-1], a, 1, 4, 1, decision_1[0], 'off', 1)
