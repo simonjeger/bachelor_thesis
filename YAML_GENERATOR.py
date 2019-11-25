@@ -83,7 +83,7 @@ path_depth_0 = [1, 3]
 decision_0 = ['expensive', 'cheap']
 decision_1 = ['lawnmower']
 rise_gain_0 = ['on', 'off']
-diving_depth_0 = [2]
+diving_depth_0 = [1]
 visual = 'off'
 
 # 0
@@ -103,4 +103,4 @@ for a in position_0:
 
 # 1
 for a in position_1:
-    write(visual, max_runtime[len(a)-1], a, 1, 4, 1, decision_1[0], 'off', 1)
+    write(visual, max_runtime[len(a)-1], a, 0.75, 4, 1, decision_1[0], 'off', 1)

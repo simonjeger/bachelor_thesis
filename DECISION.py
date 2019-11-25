@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import copy
+from operator import add
 import argparse
 import yaml
 
@@ -202,13 +203,15 @@ class decision:
             for k in range(1, self.path_depth + 1):
                 for j in range(0, len(id_robot)):
                     layer = (k - 1) * len(id_robot) + j + 1
-                    position_observe = position_observe + [[[0, 0] for i in range((self.number_of_directions) ** layer)]]
+                    position_observe = position_observe + [[[0, 0] for i in range(2 ** layer * self.number_of_directions ** layer)]]
 
                     belief_state_future = belief_state_future + [[0 for i in range(2 ** layer * self.number_of_directions ** layer)]]  # because there are always two options (true or false)
 
                     weight = weight + [[0 for i in range(2 ** layer * self.number_of_directions ** layer)]]
 
-                    value = value + [[0 for i in range(int(layer * self.number_of_directions ** layer / 2))]] # I save the true and false case in one node in the last layer
+                    value = value + [[0 for i in range(self.number_of_directions ** layer)]]
+
+            self.initial_branch = [0 for i in range(2 ** layer * self.number_of_directions ** layer)]
 
             # Determine start level
             for k in range(1, 2):
@@ -224,23 +227,22 @@ class decision:
                         position_start = [copy.deepcopy(self.position_robot_estimate[self.id_robot][0]) + dx,copy.deepcopy(self.position_robot_estimate[self.id_robot][1]) + dy]
 
                     # Fill the in the first depth level
-                    for i in range((self.number_of_directions) ** layer):
-                        p_x = position_start[0] + self.step_distance * np.cos((i % self.number_of_directions) * self.step_angle)
-                        p_y = position_start[1] + self.step_distance * np.sin((i % self.number_of_directions) * self.step_angle)
-                        position_observe[layer][i] = [p_x, p_y]
+                    for p in range(2 ** layer * self.number_of_directions ** layer):
+                        p_x = position_start[0] + self.step_distance * np.cos((int(p/2) % self.number_of_directions) * self.step_angle)
+                        p_y = position_start[1] + self.step_distance * np.sin((int(p/2) % self.number_of_directions) * self.step_angle)
+                        position_observe[layer][p] = [p_x, p_y]
 
             # Fill in the deeper path tree
             for k in range(2, self.path_depth + 1):
                 for j in range(0, len(id_robot)):
                     layer = (k - 1) * len(id_robot) + j + 1
-
                     # Fill the in the higher levels
-                    for i in range((self.number_of_directions) ** layer):
-                        p_x = position_observe[layer - len(id_robot)][int(i / ((self.number_of_directions) ** len(id_robot)))][0] + self.step_distance * np.cos((i % self.number_of_directions) * self.step_angle)
-                        p_y = position_observe[layer - len(id_robot)][int(i / ((self.number_of_directions) ** len(id_robot)))][1] + self.step_distance * np.sin((i % self.number_of_directions) * self.step_angle)
-                        position_observe[layer][i] = [p_x, p_y]
+                    for p in range(2 ** layer * self.number_of_directions ** layer):
+                        p_x = position_observe[layer - len(id_robot)][int(p/((2 * self.number_of_directions) ** len(id_robot)))][0] + self.step_distance * np.cos((int(p/2) % self.number_of_directions) * self.step_angle)
+                        p_y = position_observe[layer - len(id_robot)][int(p/((2 * self.number_of_directions) ** len(id_robot)))][1] + self.step_distance * np.sin((int(p/2) % self.number_of_directions) * self.step_angle)
+                        position_observe[layer][p] = [p_x, p_y]
 
-            # Upscale and reorder the path tree (basically convert i to p)
+            '''# Upscale and reorder the path tree (basically convert i to p)
             for k in range(1, self.path_depth + 1):
                 for j in range(0, len(id_robot)):
                     layer = (k - 1) * len(id_robot) + j + 1
@@ -255,7 +257,7 @@ class decision:
                     for i in range(len(y)):
                         #y[i] = position_observe[layer][int(i % self.number_of_directions) + int(i / (2 * self.number_of_directions * n)) * self.number_of_directions]
                         y[i] = position_observe[layer][int(i % self.number_of_directions) + int(i / (self.number_of_directions * n)) * self.number_of_directions]
-                    position_observe[layer] = y
+                    position_observe[layer] = y'''
 
             # Fill in the other trees
             for k in range(1, self.path_depth + 1):
@@ -268,7 +270,7 @@ class decision:
                         y = np.linspace(0, self.size_world[1] - 1, self.size_world[1])
                         xy = np.meshgrid(x, y)
 
-                        distance = np.sqrt(np.subtract(xy[0], position_observe[layer][int(p / 2)][0]) ** 2 + np.subtract(xy[1], position_observe[layer][int(p / 2)][1]) ** 2)
+                        distance = np.sqrt(np.subtract(xy[0], position_observe[layer][p][0]) ** 2 + np.subtract(xy[1], position_observe[layer][p][1]) ** 2)
 
                         if p % 2 == 0:
                             weight[layer][p] = np.sum(np.multiply(self.my_belief_target.belief_state, self.my_sensor_target.likelihood(distance)))
@@ -278,30 +280,28 @@ class decision:
 
                         # Figure out all possible configurations
                         if p % 2 == 0:
-                            belief_state_future[layer][p] = self.my_belief_target.test_true(position_observe[layer][int(p / 2)])
+                            belief_state_future[layer][p] = self.my_belief_target.test_true(position_observe[layer][p])
 
                         else:
-                            belief_state_future[layer][p] = self.my_belief_target.test_false(position_observe[layer][int(p / 2)])
+                            belief_state_future[layer][p] = self.my_belief_target.test_false(position_observe[layer][p])
 
                         '''# Debugging
                         fig = plt.figure()
                         ax = fig.add_subplot(111)
-                        ax.imshow(belief_state_future[layer][p],
-                                  extent=[0, self.size_world[0], self.size_world[1], 0])
+                        ax.imshow(belief_state_future[layer][p], extent=[0, self.size_world[0], self.size_world[1], 0])
                         orgin = [position_observe[1][0][0] - self.step_distance, position_observe[1][0][1]]
                         pos = patches.Circle(orgin, radius=0.2, color='black')
                         ax.add_patch(pos)
-                        pos = patches.Circle(position_observe[layer][int(p / 2)], radius=0.2, color='red')
+                        pos = patches.Circle(position_observe[layer][p], radius=0.2, color='red')
                         ax.add_patch(pos)
                         if layer > 1:
-                            pos = patches.Circle(
-                                position_observe[layer - 1][int(p / (4 * self.number_of_directions))],
+                            pos = patches.Circle(position_observe[layer - 1][int(p / (2 * self.number_of_directions))],
                                 radius=0.2,
                                 color='white')
                             ax.add_patch(pos)
                         plt.savefig(str(layer) + '_' + str(p) + '.png')
-                        plt.close()'''
-
+                        plt.close()
+            print(1/0)'''
 
             # Multiply down the tree
             for k in range(1, self.path_depth + 1):
@@ -317,15 +317,13 @@ class decision:
             for k in range(self.path_depth, self.path_depth + 1):
                 for j in range(len(id_robot) - 1, len(id_robot)):
                     layer = (k - 1) * len(id_robot) + j + 1
-                    for p in range(2 ** layer * self.number_of_directions ** layer):
-                        if p % 2 == 0:
-                            i = int((p / 2) % self.number_of_directions + int((p / 2) / (2 ** layer / 2 * self.number_of_directions)) * self.number_of_directions)
 
-                            # If path leads outside of world
-                            if (position_observe[layer][int(p / 2)][0] < 0) | (position_observe[layer][int(p / 2)][0] >= self.size_world[0]) | (position_observe[layer][int(p / 2)][1] < 0) | (position_observe[layer][int(p / 2)][1] >= self.size_world[1]):
-                                value[layer][i] = - 1
-                            else:
-                                value[layer][i] = value[layer][i] + weight[layer][p] * self.kullback_leibler(belief_state_future[layer][p], self.my_belief_target.belief_state) + weight[layer][p + 1] * self.kullback_leibler(belief_state_future[layer][p + 1], self.my_belief_target.belief_state)
+                    for i in range(self.number_of_directions ** layer):
+                        for p in self.i_to_p(i, layer):
+                                if (position_observe[layer][p][0] < 0) | (position_observe[layer][p][0] >= self.size_world[0]) | (position_observe[layer][p][1] < 0) | (position_observe[layer][p][1] >= self.size_world[1]):
+                                    value[layer][i] = - 1
+                                else:
+                                    value[layer][i] = value[layer][i] + weight[layer][p] * self.kullback_leibler(belief_state_future[layer][p], self.my_belief_target.belief_state)
 
             # Update rise_gain
             self.update_rise_gain()
@@ -401,3 +399,16 @@ class decision:
 
                 if (i_n >= n):
                     self.rise_gain = self.rise_gain_initial
+
+
+    def i_to_p(self,i, layer):
+        result = [np.argmin(self.initial_branch)]
+        for l in range(layer):
+            addition = [(self.number_of_directions * 2) ** (l)] * len(result)
+            addition = list( map(add, result, addition) )
+            result = result + addition
+
+        for r in result:
+            self.initial_branch[r] = 1
+
+        return result
