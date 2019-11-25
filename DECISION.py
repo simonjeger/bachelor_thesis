@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import copy
 import argparse
 import yaml
@@ -168,7 +169,7 @@ class decision:
 
                 # Choose path
                 my_layer = (self.path_depth - 1) * len(id_robot) + len(id_robot) - id_robot.index(self.id_robot) - 1
-                choice = int(np.argmax(value[-1]) / ((self.number_of_directions) ** my_layer)) % self.number_of_directions
+                choice = int(np.argmax(value[-1]) / (self.number_of_directions ** my_layer)) % self.number_of_directions
 
                 # Norm it again to a stepsize that it can walk
                 return [choice * self.step_angle, self.step_distance / self.yaml_parameters['deciding_rate']]
@@ -207,7 +208,7 @@ class decision:
 
                     weight = weight + [[0 for i in range(2 ** layer * self.number_of_directions ** layer)]]
 
-                    value = value + [[0 for i in range(layer * self.number_of_directions ** layer)]]
+                    value = value + [[0 for i in range(int(layer * self.number_of_directions ** layer / 2))]] # I save the true and false case in one node in the last layer
 
             # Determine start level
             for k in range(1, 2):
@@ -246,12 +247,14 @@ class decision:
 
                     y = position_observe[layer]
                     n = 2 ** (layer - 1)
+
+                    # Setting y to the right size
                     for i in range(n - 1):
                         y = y + position_observe[layer]
 
                     for i in range(len(y)):
-                        y[i] = position_observe[layer][int(i % self.number_of_directions) + int(i / (2 * self.number_of_directions * n)) * self.number_of_directions]
-
+                        #y[i] = position_observe[layer][int(i % self.number_of_directions) + int(i / (2 * self.number_of_directions * n)) * self.number_of_directions]
+                        y[i] = position_observe[layer][int(i % self.number_of_directions) + int(i / (self.number_of_directions * n)) * self.number_of_directions]
                     position_observe[layer] = y
 
             # Fill in the other trees
@@ -279,6 +282,26 @@ class decision:
 
                         else:
                             belief_state_future[layer][p] = self.my_belief_target.test_false(position_observe[layer][int(p / 2)])
+
+                        '''# Debugging
+                        fig = plt.figure()
+                        ax = fig.add_subplot(111)
+                        ax.imshow(belief_state_future[layer][p],
+                                  extent=[0, self.size_world[0], self.size_world[1], 0])
+                        orgin = [position_observe[1][0][0] - self.step_distance, position_observe[1][0][1]]
+                        pos = patches.Circle(orgin, radius=0.2, color='black')
+                        ax.add_patch(pos)
+                        pos = patches.Circle(position_observe[layer][int(p / 2)], radius=0.2, color='red')
+                        ax.add_patch(pos)
+                        if layer > 1:
+                            pos = patches.Circle(
+                                position_observe[layer - 1][int(p / (4 * self.number_of_directions))],
+                                radius=0.2,
+                                color='white')
+                            ax.add_patch(pos)
+                        plt.savefig(str(layer) + '_' + str(p) + '.png')
+                        plt.close()'''
+
 
             # Multiply down the tree
             for k in range(1, self.path_depth + 1):
@@ -310,7 +333,8 @@ class decision:
             if self.rise_gain < 0:
                 # Choose path
                 my_layer = (self.path_depth - 1) * len(id_robot) + len(id_robot) - id_robot.index(self.id_robot) - 1
-                choice = int(np.argmax(value[-1]) / ((self.number_of_directions) ** my_layer)) % self.number_of_directions
+                choice = int(np.argmax(value[-1]) / (self.number_of_directions ** my_layer)) % self.number_of_directions
+
                 # Norm it again to a stepsize that it can walk
                 return [choice * self.step_angle, self.step_distance / self.yaml_parameters['deciding_rate']]
 
