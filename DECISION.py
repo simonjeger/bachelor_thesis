@@ -5,6 +5,7 @@ import copy
 from operator import add
 import argparse
 import yaml
+import time
 
 
 class decision:
@@ -49,11 +50,19 @@ class decision:
         self.rise_gain = self.rise_gain_initial
 
         # Parameter for lawnmower
-        self.i_step = - self.my_sensor_target.cross_over / self.step_distance - (len(self.id_contact) - 2 - self.id_robot) * 2 * self.my_sensor_target.cross_over / self.step_distance
+        self.len_x = np.floor(self.my_sensor_target.cross_over / self.step_distance)
+        self.len_y = np.floor(self.size_world[1] / self.step_distance - 2 * self.len_x)
+        self.i_step = - (self.len_x + (len(self.id_contact) - 2 - self.id_robot) * 2 * self.len_x) - 1 # In compensate for the np.floor above
         self.angle_step_distance = [np.pi / 2, self.step_distance / self.yaml_parameters['deciding_rate']]
+
+        # Parameter for performance_analysis
+        self.performance_time_computation = []
 
 
     def decide_cheap(self):
+        # Initialize performance_time vector
+        self.time_start = time.time()
+
         # Am I on the same depth level as the rest
         if self.id_contact[-1][0] > 0:
             self.id_contact[-1][0] = self.id_contact[-1][0] - 1
@@ -163,6 +172,9 @@ class decision:
                     for i in range((self.number_of_directions) ** layer):
                         value[layer][i] = value[layer][i] + value[layer-1][int(i / (self.number_of_directions))]
 
+            # How long it takes to compute a decision
+            self.performance_time_computation = self.performance_time_computation + [[layer, time.time() - self.time_start]]
+
             # Update rise_gain
             self.update_rise_gain()
 
@@ -183,6 +195,9 @@ class decision:
 
 
     def decide_expensive(self):
+        # Initialize performance_time vector
+        self.time_start = time.time()
+
         # Am I on the same depth level as the rest
         if self.id_contact[-1][0] > 0:
             self.id_contact[-1][0] = self.id_contact[-1][0] - 1
@@ -242,23 +257,6 @@ class decision:
                         p_y = position_observe[layer - len(id_robot)][int(p/((2 * self.number_of_directions) ** len(id_robot)))][1] + self.step_distance * np.sin((int(p/2) % self.number_of_directions) * self.step_angle)
                         position_observe[layer][p] = [p_x, p_y]
 
-            '''# Upscale and reorder the path tree (basically convert i to p)
-            for k in range(1, self.path_depth + 1):
-                for j in range(0, len(id_robot)):
-                    layer = (k - 1) * len(id_robot) + j + 1
-
-                    y = position_observe[layer]
-                    n = 2 ** (layer - 1)
-
-                    # Setting y to the right size
-                    for i in range(n - 1):
-                        y = y + position_observe[layer]
-
-                    for i in range(len(y)):
-                        #y[i] = position_observe[layer][int(i % self.number_of_directions) + int(i / (2 * self.number_of_directions * n)) * self.number_of_directions]
-                        y[i] = position_observe[layer][int(i % self.number_of_directions) + int(i / (self.number_of_directions * n)) * self.number_of_directions]
-                    position_observe[layer] = y'''
-
             # Fill in the other trees
             for k in range(1, self.path_depth + 1):
                 for j in range(len(id_robot)):
@@ -285,24 +283,6 @@ class decision:
                         else:
                             belief_state_future[layer][p] = self.my_belief_target.test_false(position_observe[layer][p])
 
-                        '''# Debugging
-                        fig = plt.figure()
-                        ax = fig.add_subplot(111)
-                        ax.imshow(belief_state_future[layer][p], extent=[0, self.size_world[0], self.size_world[1], 0])
-                        orgin = [position_observe[1][0][0] - self.step_distance, position_observe[1][0][1]]
-                        pos = patches.Circle(orgin, radius=0.2, color='black')
-                        ax.add_patch(pos)
-                        pos = patches.Circle(position_observe[layer][p], radius=0.2, color='red')
-                        ax.add_patch(pos)
-                        if layer > 1:
-                            pos = patches.Circle(position_observe[layer - 1][int(p / (2 * self.number_of_directions))],
-                                radius=0.2,
-                                color='white')
-                            ax.add_patch(pos)
-                        plt.savefig(str(layer) + '_' + str(p) + '.png')
-                        plt.close()
-            print(1/0)'''
-
             # Multiply down the tree
             for k in range(1, self.path_depth + 1):
                 for j in range(len(id_robot)):
@@ -325,6 +305,9 @@ class decision:
                                 else:
                                     value[layer][i] = value[layer][i] + weight[layer][p] * self.kullback_leibler(belief_state_future[layer][p], self.my_belief_target.belief_state)
 
+            # How long it takes to compute a decision
+            self.performance_time_computation = self.performance_time_computation + [[layer, time.time() - self.time_start]]
+
             # Update rise_gain
             self.update_rise_gain()
 
@@ -345,13 +328,11 @@ class decision:
 
     def decide_lawnmower(self):
         self.i_step = self.i_step + 1
-        len_x = self.my_sensor_target.cross_over / self.step_distance
-        len_y = self.size_world[1] / self.step_distance - 2 * len_x
 
-        a = len_y - (len(self.id_contact) - 2) * 2 * len_x
-        b = a + 2 * len_x + (len(self.id_contact) - 2 - self.id_robot) * 4 * len_x
-        c = b + len_y - (len(self.id_contact) - 2) * 2 * len_x
-        d = c + 2 * len_x + self.id_robot * 4 * len_x
+        a = self.len_y - (len(self.id_contact) - 2) * 2 * self.len_x
+        b = a + 2 * self.len_x + (len(self.id_contact) - 2 - self.id_robot) * 4 * self.len_x
+        c = b + self.len_y - (len(self.id_contact) - 2) * 2 * self.len_x
+        d = c + 2 * self.len_x + self.id_robot * 4 * self.len_x
 
         if self.i_step >= d:
             self.angle_step_distance[0] = np.pi / 2

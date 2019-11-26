@@ -154,7 +154,7 @@ class result:
         # hb_belief_state_target
         ax[-1, 0].imshow(self.my_homebase.my_belief_target.belief_state, extent=[0, self.size_world_real[0], self.size_world_real[1], 0])
 
-        tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=True)
+        tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=False)
         ax[-1, 0].add_patch(tar)
 
         ax[-1, 0].set_title('Belief of homebase about target')

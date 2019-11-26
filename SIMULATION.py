@@ -6,7 +6,6 @@ import matplotlib.patches as patches
 from scipy.interpolate import griddata
 import copy
 import os
-import time
 import argparse
 import yaml
 
@@ -47,7 +46,6 @@ class simulation:
             self.performance_position_target = []
             self.performance_number_of_iteration = []
             self.performance_time_computation = []
-            self.performance_time_picture = []
             self.cicle = 0
 
             # Make directories
@@ -60,13 +58,10 @@ class simulation:
 
         if self.yaml_parameters['position_target'] == 'random':
             self.position_target = [np.random.randint(self.size_world_real[0]), np.random.randint(self.size_world_real[1])]
-        else:
-            self.position_target = self.yaml_parameters['position_target']
-        self.position_target = [int(self.position_target[0] * self.scaling), int(self.position_target[1] * self.scaling)]
 
-        # Initialize performance_time vector
-        self.time_computation = 0
-        self.time_picture = 0
+        else:
+            self.position_target = self.yaml_parameters['position_target'][self.cicle]
+            self.position_target = [int(self.position_target[0] * self.scaling), int(self.position_target[1] * self.scaling)]
 
         # Initialize decision rate parameter
         self.d = self.yaml_parameters['deciding_rate']
@@ -117,14 +112,11 @@ class simulation:
         max_belief = self.yaml_parameters['max_belief']
 
         if self.yaml_parameters['max_runtime'] == '':
-            max_runtime = self.my_robot[-1].range / (self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate'])
+            max_runtime = self.my_robot[-1].range / self.yaml_parameters['step_distance']
         else:
-            max_runtime = self.yaml_parameters['max_runtime'] * self.scaling
+            max_runtime = self.yaml_parameters['max_runtime'] / self.yaml_parameters['step_distance']
 
         while (np.max(belief_maximum) < max_belief) & (self.i < max_runtime):
-
-            # Start time for performance_time
-            self.time_start = time.time()
 
             # Find new maximum in belief state to check if I'm certain enough about position of target
             belief_maximum = [0] * len(self.my_robot)
@@ -187,6 +179,7 @@ class simulation:
                 distance_estimate = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
                 distance_exact = [[1 for i in range(len(self.my_robot))] for j in range(len(self.my_robot))]
 
+                # Communication when in range
                 for x in range(len(self.my_robot)):
                     for y in range(len(self.my_robot)):
 
@@ -214,6 +207,17 @@ class simulation:
                                 self.my_robot[x].id_contact[y][0] = 0
                                 self.my_robot[y].id_contact[x][1] = 0
 
+            # If everybody is connected -> delay surfacing
+            everybody_is_connected = 1
+            for x in self.my_robot:
+                for i in range(len(x.id_contact) - 1):
+                    if x.id_contact[i] != [1, 1]:
+                        everybody_is_connected = 0
+            if everybody_is_connected:
+                for x in self.my_robot:
+                    x.my_decision.rise_gain = x.my_decision.rise_gain_initial
+
+            # Communication when at the surface
             for x in range(len(self.my_robot)):
                 if self.my_robot[x].id_contact[-1][0] == self.my_robot[x].my_decision.diving_depth:
                     for z in range(len(self.my_robot)):
@@ -246,17 +250,11 @@ class simulation:
                             self.my_robot[y].my_belief_position.initialize_neighbour(x, self.my_robot[x].my_belief_position.belief_state[x])
 
             # Increase runtime counter
-            self.i = self.i + self.my_robot[-1].step_distance
-
-            # How long it takes to compute everything
-            self.time_computation = self.time_computation + (time.time() - self.time_start)
+            self.i = self.i + 1
 
             if (self.d >= self.yaml_parameters['deciding_rate']) & (self.yaml_parameters['visual'] == 'on'):
                 # Safe picture of the beliefs (target & position) only everytime i take a picture
                 self.my_result.picture_save()
-
-            # How long it takes to save a picture
-            self.time_picture = self.time_picture + (time.time() - self.time_start)
 
         # Turn saved pictures into video and then delete the pictures
         if self.yaml_parameters['visual'] == 'on':
@@ -277,13 +275,14 @@ class simulation:
         else:
             self.performance_position_target = self.performance_position_target + [[self.position_target[0], self.position_target[1], 'normal']]
 
-        self.performance_number_of_iteration = self.performance_number_of_iteration + [(self.i - 1) * self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate']]
+        self.performance_number_of_iteration = self.performance_number_of_iteration + [(self.i - 1) * self.yaml_parameters['step_distance']]
 
-        self.performance_time_computation = self.performance_time_computation + [self.time_computation / (self.i + 1)]
-        self.performance_time_picture = self.performance_time_picture + [self.time_picture / (self.i + 1)]
+        # Get the time measurements (regardless of the depth layer) from the decision module
+        for x in self.my_robot:
+            self.performance_time_computation = self.performance_time_computation + x.my_decision.performance_time_computation
+
 
     def performance_target_position(self):
-
         # Filling performance_map
         performance_map = [[0 for i in range(self.size_world[0])] for j in range(self.size_world[1])]
         for i in range(len(self.performance_position_target)):
@@ -332,24 +331,41 @@ class simulation:
         # Save figure
         plt.colorbar(im)
         plt.gca().set_aspect('equal', adjustable='box')
-        ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average: ' + str(int(np.sum(self.performance_number_of_iteration) / self.cicle)) + ' over ' + str(self.cicle) + ' cicles')
+        if len(self.my_robot) > 1:
+            ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average: ' + str(int(np.sum(self.performance_number_of_iteration) / self.cicle)) + ' over ' + str(self.cicle) + ' cicles')
+        else:
+            ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robot)' + '\n' + 'Average distance: ' + str(int(np.sum(self.performance_number_of_iteration) / self.cicle)) + ' over ' + str(self.cicle) + ' cicles')
         fig.savefig(self.path + '/performance/' + self.path + '_performance_target_position.png')
         plt.close(fig)
 
 
     def performance_time(self):
-        # Creating visual representation of time results
-        i_x = np.linspace(1, self.cicle, self.cicle)
-        plt.plot(i_x, self.performance_time_computation)
-        plt.plot(i_x, self.performance_time_picture)
-        plt.plot(i_x, np.subtract(self.performance_time_picture, self.performance_time_computation))
+        # Creating visual representation of time results as a function of their level
+        average = [0] * len(self.my_robot) * self.yaml_parameters['path_depth']
+        i_count = [0] * len(self.my_robot) * self.yaml_parameters['path_depth']
 
-        title_picture = 'Average picture: ' + str(np.sum(self.performance_time_picture) / self.cicle)
-        title_computation = 'Average computation: ' + str(np.sum(self.performance_time_computation) / self.cicle)
-        title_difference = 'Average difference: ' + str(np.sum(np.subtract(self.performance_time_picture, self.performance_time_computation)) / self.cicle)
+        ax = plt.subplot(1, 1, 1)
 
+        for x in self.performance_time_computation:
+            ax.scatter(x[0], x[1], color='blue')
+            average[x[0]] = average[x[0]] + x[1]
+            i_count[x[0]] = i_count[x[0]] + 1
+
+        for j in range(len(average)):
+            if average[j] != 0:
+                average[j] = average[j] / i_count[j]
+            else:
+                average[j] = 0
+
+        ax.set_xlim(0,len(average) + 1)
+        ax.set_ylim(0,)
+
+        subtitle = ''
+        for i_count in range(1, len(average)):
+            if average[i_count] != 0:
+                subtitle = subtitle + '   Average ' + str(i_count) + ': ' + str(np.round(average[i_count], 8)) + '\n'
         plt.title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)')
-        plt.legend([title_computation, title_picture, title_difference])
+        plt.text(0, 0, subtitle, bbox=dict(facecolor='white', alpha=0.5))
 
         # Save picture in main folder
         plt.savefig(self.path + '/performance/' + self.path + '_performance_time.png')
@@ -358,10 +374,33 @@ class simulation:
 # Initialize a simulation
 my_simulation = simulation()
 
-for i in range(1000):
-    # Everytime I set a new random position for the target
-    my_simulation.run()
+# Get yaml parameter
+parser = argparse.ArgumentParser()
+parser.add_argument('yaml_file')
+args = parser.parse_args()
 
-    # Get information of performance over the total of all my simulations
-    my_simulation.performance_target_position()
-    my_simulation.performance_time()
+with open(args.yaml_file, 'rt') as fh:
+    yaml_parameters = yaml.safe_load(fh)
+
+if yaml_parameters['number_of_cicles'] == '':
+    for i in range(len(yaml_parameters['position_target'])):
+        # Everytime I set a new random position for the target
+        my_simulation.run()
+
+        # Get information of performance over the total of all my simulations
+        my_simulation.performance_target_position()
+        my_simulation.performance_time()
+
+else:
+    # Warn user to use less cicles
+    if yaml_parameters['number_of_cicles'] > len(yaml_parameters['position_target']):
+        print('Use smaller number_of_cicles or more position_targets')
+
+    else:
+        for i in range(yaml_parameters['number_of_cicles']):
+            # Everytime I set a new random position for the target
+            my_simulation.run()
+
+            # Get information of performance over the total of all my simulations
+            my_simulation.performance_target_position()
+            my_simulation.performance_time()

@@ -4,7 +4,7 @@ import os
 path = 'config'
 os.makedirs(path, exist_ok=True)
 
-def write(visual, max_runtime, position_initial, step_distance, number_of_directions, path_depth, decision, rise_gain, diving_depth):
+def write(visual, max_runtime, position_initial, position_target, step_distance, number_of_directions, path_depth, decision, rise_gain, diving_depth):
 
     name = str(len(position_initial)) + 'rob_' + str(number_of_directions) + 'dir_' + str(path_depth) + 'pat_' + str(decision[0:3]) + '_' + str(rise_gain) + '_' + str(diving_depth)
     bsub = 'bsub -W 24:00 -R "rusage[mem=10000]" python SIMULATION.py'
@@ -26,10 +26,11 @@ def write(visual, max_runtime, position_initial, step_distance, number_of_direct
     text = text + "# parameter_simulation" + '\n'
     text = text + "name_of_simulation: " + "'" + 'R_' + name + "'" + '\n'
     text = text + "size_world: [50000, 50000]" + '\n'
-    text = text + "resolution: [250, 250]" + '\n'
+    text = text + "resolution: [40, 40]" + '\n'
+    text = text + "number_of_cicles: ''" + '\n'
     text = text + "visual: '" + str(visual) + "'" + '\n'
     text = text + "position_initial: " + str(position_initial) + '\n'
-    text = text + "position_target: 'random'" + '\n'
+    text = text + "position_target: " + str(position_target) + '\n'
     text = text + "max_belief: 0.99" + '\n'
     text = text + "max_runtime: " + str(max_runtime) + '\n'
     text = text + "max_error: 0" + '\n'
@@ -76,31 +77,41 @@ def write(visual, max_runtime, position_initial, step_distance, number_of_direct
     file.close()
 
 max_runtime = [9*50000, 5*50000, 4*50000, 3*50000]
-position_0 = [[[0, 0]], [[0, 0], [50000, 50000]], [[0, 0], [50000, 0], [50000, 50000]]]
-position_1 = [[[0, 0]], [[7000, 0], [0, 0]], [[0, 0], [7000, 0], [14000, 0]]]
-number_of_directions_0 = [8, 16]
-path_depth_0 = [1, 3]
+
+position_initial_0 = [[[0, 0]], [[0, 0], [50000, 50000]], [[0, 0], [50000, 0], [0, 50000]]]
+position_initial_1 = [[[0, 0]], [[7000, 0], [0, 0]], [[0, 0], [7000, 0], [14000, 0]]]
+
+position_target_x = np.linspace(2500, 47500, 10)
+position_target_y = np.linspace(2500, 47500, 10)
+position_target = []
+for j in range(len(position_target_y)):
+    for i in range(len(position_target_x)):
+        position_target = position_target + [[position_target_x[i], position_target_y[j]]]
+
+number_of_directions_0 = [8]
+path_depth_0 = [1, 2, 3]
 decision_0 = ['expensive', 'cheap']
 decision_1 = ['lawnmower']
-rise_gain_0 = ['on', 'off']
-diving_depth_0 = [1]
+#rise_gain_0 = ['on', 'off']
+rise_gain_0 = ['off']
+diving_depth_0 = [1, 2]
 visual = 'off'
 
 # 0
-for a in position_0:
+for a in position_initial_0:
     for b in number_of_directions_0:
         for c in path_depth_0:
-            if len(a) != 1:
-                for d in decision_0:
+            for d in decision_0:
+                if len(a) != 1:
                     for e in rise_gain_0:
                         if (e == 'on'):
                             for f in diving_depth_0:
-                                write(visual, max_runtime[len(a)-1], a, 1.5, b, c, d, e, f)
+                                write(visual, max_runtime[len(a)-1], a, position_target, 1.5, b, c, d, e, f)
                         elif (e == 'off'):
-                            write(visual, max_runtime[len(a)-1], a, 1.5, b, c, d, e, 1)
-            else:
-                write(visual, max_runtime[len(a) - 1], a, 1.5, b, c, 'expensive', 'off', 1)
+                            write(visual, max_runtime[len(a)-1], a, position_target, 1.5, b, c, d, e, 1)
+                else:
+                    write(visual, max_runtime[len(a) - 1], a, position_target, 1.5, b, c, d, 'off', 1)
 
-# 1
-for a in position_1:
-    write(visual, max_runtime[len(a)-1], a, 0.75, 4, 1, decision_1[0], 'off', 1)
+'''# 1
+for a in position_initial_1:
+    write(visual, max_runtime[len(a)-1], a, position_target, 0.75, 4, 1, decision_1[0], 'off', 1)'''
