@@ -347,9 +347,9 @@ class simulation:
         ax = plt.subplot(1, 1, 1)
 
         for x in self.performance_time_computation:
-            ax.scatter(x[0], x[1], color='blue')
-            average[x[0]] = average[x[0]] + x[1]
-            i_count[x[0]] = i_count[x[0]] + 1
+            ax.scatter(x[0]-1, x[1], color='blue')
+            average[x[0]-1] = average[x[0]-1] + x[1]
+            i_count[x[0]-1] = i_count[x[0]-1] + 1
 
         for j in range(len(average)):
             if average[j] != 0:
