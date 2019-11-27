@@ -347,9 +347,11 @@ class simulation:
         ax = plt.subplot(1, 1, 1)
 
         for x in self.performance_time_computation:
-            ax.scatter(x[0]-1, x[1], color='blue')
+            ax.scatter(x[0], x[1], color='blue')
             average[x[0]-1] = average[x[0]-1] + x[1]
             i_count[x[0]-1] = i_count[x[0]-1] + 1
+
+        print(average)
 
         for j in range(len(average)):
             if average[j] != 0:
@@ -357,13 +359,15 @@ class simulation:
             else:
                 average[j] = 0
 
+        print(average)
+
         ax.set_xlim(0,len(average) + 1)
         ax.set_ylim(0,)
 
         subtitle = ''
-        for i_count in range(1, len(average)):
+        for i_count in range(0, len(average)):
             if average[i_count] != 0:
-                subtitle = subtitle + '   Average ' + str(i_count) + ': ' + str(np.round(average[i_count], 8)) + '\n'
+                subtitle = subtitle + '   Average ' + str(i_count+1) + ': ' + str(np.round(average[i_count], 8)) + '\n'
         plt.title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)')
         plt.text(0, 0, subtitle, bbox=dict(facecolor='white', alpha=0.5))
 
