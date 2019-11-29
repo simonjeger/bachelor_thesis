@@ -58,6 +58,7 @@ class simulation:
 
         if self.yaml_parameters['position_target'] == 'random':
             self.position_target = [np.random.randint(self.size_world_real[0]), np.random.randint(self.size_world_real[1])]
+            self.position_target = [int(self.position_target[0] * self.scaling), int(self.position_target[1] * self.scaling)]
 
         else:
             self.position_target = self.yaml_parameters['position_target'][self.cicle]
@@ -351,15 +352,11 @@ class simulation:
             average[x[0]-1] = average[x[0]-1] + x[1]
             i_count[x[0]-1] = i_count[x[0]-1] + 1
 
-        print(average)
-
         for j in range(len(average)):
             if average[j] != 0:
                 average[j] = average[j] / i_count[j]
             else:
                 average[j] = 0
-
-        print(average)
 
         ax.set_xlim(0,len(average) + 1)
         ax.set_ylim(0,)
@@ -387,24 +384,20 @@ with open(args.yaml_file, 'rt') as fh:
     yaml_parameters = yaml.safe_load(fh)
 
 if yaml_parameters['number_of_cicles'] == '':
-    for i in range(len(yaml_parameters['position_target'])):
-        # Everytime I set a new random position for the target
-        my_simulation.run()
-
-        # Get information of performance over the total of all my simulations
-        my_simulation.performance_target_position()
-        my_simulation.performance_time()
-
+    if yaml_parameters['position_target'] == 'random':
+        number_of_cicles = 100
+    else:
+        number_of_cicles = len(yaml_parameters['position_target'])
 else:
-    # Warn user to use less cicles
     if yaml_parameters['number_of_cicles'] > len(yaml_parameters['position_target']):
         print('Use smaller number_of_cicles or more position_targets')
-
     else:
-        for i in range(yaml_parameters['number_of_cicles']):
-            # Everytime I set a new random position for the target
-            my_simulation.run()
+        number_of_cicles = yaml_parameters['number_of_cicles']
 
-            # Get information of performance over the total of all my simulations
-            my_simulation.performance_target_position()
-            my_simulation.performance_time()
+for i in range(number_of_cicles):
+    # Run the simulation
+    my_simulation.run()
+
+    # Get information of performance over the total of all my simulations
+    my_simulation.performance_target_position()
+    my_simulation.performance_time()

@@ -7,7 +7,8 @@ os.makedirs(path, exist_ok=True)
 def write(visual, max_runtime, position_initial, position_target, step_distance, number_of_directions, path_depth, decision, rise_gain, diving_depth):
 
     name = str(len(position_initial)) + 'rob_' + str(number_of_directions) + 'dir_' + str(path_depth) + 'pat_' + str(decision[0:3]) + '_' + str(rise_gain) + '_' + str(diving_depth)
-    bsub = 'bsub -W 24:00 -R "rusage[mem=10000]" python SIMULATION.py'
+    #bsub = 'bsub -W 24:00 -R "rusage[mem=10000]" python SIMULATION.py'
+    bsub = 'bsub -W 60:00 -R "rusage[mem=10000]" python SIMULATION.py'
 
     # Write submit command
     file = open('submit.txt', "a")
@@ -26,7 +27,7 @@ def write(visual, max_runtime, position_initial, position_target, step_distance,
     text = text + "# parameter_simulation" + '\n'
     text = text + "name_of_simulation: " + "'" + 'R_' + name + "'" + '\n'
     text = text + "size_world: [50000, 50000]" + '\n'
-    text = text + "resolution: [40, 40]" + '\n'
+    text = text + "resolution: [250, 250]" + '\n'
     text = text + "number_of_cicles: ''" + '\n'
     text = text + "visual: '" + str(visual) + "'" + '\n'
     text = text + "position_initial: " + str(position_initial) + '\n'
@@ -79,6 +80,7 @@ def write(visual, max_runtime, position_initial, position_target, step_distance,
 max_runtime = [9*50000, 5*50000, 4*50000, 3*50000]
 
 position_initial_0 = [[[0, 0]], [[0, 0], [50000, 50000]], [[0, 0], [50000, 0], [0, 50000]]]
+#position_initial_0 = [[[0, 0], [50000, 50000]], [[0, 0], [50000, 0], [0, 50000]]]
 position_initial_1 = [[[0, 0]], [[7000, 0], [0, 0]], [[0, 0], [7000, 0], [14000, 0]]]
 
 position_target_x = np.linspace(2500, 47500, 10)
@@ -90,8 +92,11 @@ for j in range(len(position_target_y)):
         position_target = position_target + [[position_target_x[i], position_target_y[j]]] * n
 
 number_of_directions_0 = [8]
+#number_of_directions_0 = [16]
 path_depth_0 = [1, 2, 3]
+#path_depth_0 = [1]
 decision_0 = ['expensive', 'cheap']
+#decision_0 = ['cheap']
 decision_1 = ['lawnmower']
 #rise_gain_0 = ['on', 'off']
 rise_gain_0 = ['off']
