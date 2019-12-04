@@ -12,7 +12,6 @@ import yaml
 import AGENT
 import RESULT
 
-
 class simulation:
 
     def __init__(self):
@@ -53,6 +52,10 @@ class simulation:
             os.makedirs(self.path + '/video', exist_ok=True)
             os.makedirs(self.path + '/sensor', exist_ok=True)
             os.makedirs(self.path + '/performance', exist_ok=True)
+
+            # Remove file of performance_target_position if it already exists
+            if os.path.exists(self.path + '/performance/' + self.path + '_performance_target_position.txt'):
+                os.remove(self.path + '/performance/' + self.path + '_performance_target_position.txt')
 
     def run(self):
 
@@ -276,7 +279,7 @@ class simulation:
         else:
             self.performance_position_target = self.performance_position_target + [[self.position_target[0], self.position_target[1], 'normal']]
 
-        self.performance_number_of_iteration = self.performance_number_of_iteration + [(self.i - 1) * self.yaml_parameters['step_distance']]
+        self.performance_number_of_iteration = self.performance_number_of_iteration + [(self.i - 1) / (60*60)] # I measure time in hours
 
         # Get the time measurements (regardless of the depth layer) from the decision module
         for x in self.my_robot:
@@ -333,11 +336,16 @@ class simulation:
         plt.colorbar(im)
         plt.gca().set_aspect('equal', adjustable='box')
         if len(self.my_robot) > 1:
-            ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average: ' + str(int(np.sum(self.performance_number_of_iteration) / self.cicle)) + ' over ' + str(self.cicle) + ' cicles')
+            ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average time: ' + str(np.round(np.sum(self.performance_number_of_iteration) / self.cicle, 2)) + 'h over ' + str(self.cicle) + ' cicles')
         else:
-            ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robot)' + '\n' + 'Average distance: ' + str(int(np.sum(self.performance_number_of_iteration) / self.cicle)) + ' over ' + str(self.cicle) + ' cicles')
-        fig.savefig(self.path + '/performance/' + self.path + '_performance_target_position.png')
+            ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robot)' + '\n' + 'Average time: ' + str(np.round(np.sum(self.performance_number_of_iteration) / self.cicle, 2)) + 'h over ' + str(self.cicle) + ' cicles')
+        fig.savefig(self.path + '/performance/' + self.path + '_performance_target_position.pdf')
         plt.close(fig)
+
+        # Save text
+        f = open(self.path + '/performance/' + self.path + '_performance_target_position.txt', "a")
+        f.write(str(int(np.divide(self.position_target, self.scaling)[0])) + '\t' + str(int(np.divide(self.position_target, self.scaling)[1])) + '\t' + str(np.sum(self.performance_number_of_iteration) / self.cicle) + '\n')
+        f.close()
 
 
     def performance_time(self):
@@ -369,8 +377,17 @@ class simulation:
         plt.text(0, 0, subtitle, bbox=dict(facecolor='white', alpha=0.5))
 
         # Save picture in main folder
-        plt.savefig(self.path + '/performance/' + self.path + '_performance_time.png')
+        plt.savefig(self.path + '/performance/' + self.path + '_performance_time.pdf')
         plt.close()
+
+        # Save text
+        if os.path.exists(self.path + '/performance/' + self.path + '_performance_time.txt'):
+            os.remove(self.path + '/performance/' + self.path + '_performance_time.txt')
+        f = open(self.path + '/performance/' + self.path + '_performance_time.txt', "a")
+        for x in self.performance_time_computation:
+            ax.scatter(x[0], x[1], color='blue')
+            f.write(str(x[0]) + '\t' + str(x[1]) + '\n')
+        f.close()
 
 # Initialize a simulation
 my_simulation = simulation()

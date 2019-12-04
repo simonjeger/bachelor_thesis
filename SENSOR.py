@@ -23,7 +23,6 @@ class sensor_target_boolean:
         self.size_world = size_world
         self.size_world_real = size_world_real
         self.scaling = size_world[0] / size_world_real[0]
-        self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
         self.cross_over = self.yaml_parameters['cross_over'] * self.scaling
@@ -47,19 +46,27 @@ class sensor_target_boolean:
 
     def picture_save(self):
         # Initalize both axis
-        x = np.linspace(0, self.distance_max, int(self.distance_max / self.scaling))
+        x = np.linspace(0, 2 * self.cross_over, 1000)
         y = self.likelihood(x)
 
         # Plot sensor model
-        plt.plot(x / self.scaling, y)
-        plt.xlabel('Distance to target')
-        plt.xlim((0, self.distance_max / self.scaling))
+        fig = plt.figure(figsize=np.multiply([3,1], 3))
+        ax = fig.add_subplot(111)
+
+        ax.plot(x / self.scaling, y)
+        plt.xlabel('Distance to target [m]')
+        plt.xlim((0, 2 * self.cross_over / self.scaling))
         plt.ylabel('Likelihood')
         plt.ylim((0, 1))
         plt.title('sensor_target')
 
         # Save picture in main folder
-        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_target.png')
+        ratio = 0.3
+        xleft, xright = ax.get_xlim()
+        ybottom, ytop = ax.get_ylim()
+        ax.set_aspect(abs((xright - xleft) / (ybottom - ytop)) * ratio)
+
+        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_target.pdf')
         plt.close()
 
 
@@ -82,7 +89,6 @@ class sensor_target_angle:
         self.size_world = size_world
         self.size_world_real = size_world_real
         self.scaling = size_world[0] / size_world_real[0]
-        self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
         self.cross_over = self.yaml_parameters['cross_over'] * self.scaling
@@ -129,19 +135,27 @@ class sensor_target_angle:
 
     def picture_save(self):
         # Initalize both axis
-        x = np.linspace(0, self.distance_max, int(self.distance_max / self.scaling))
+        x = np.linspace(0, 2 * self.cross_over, 1000)
         y = self.likelihood(x)
 
         # Plot sensor model
-        plt.plot(x / self.scaling, y)
-        plt.xlabel('Distance to target')
-        plt.xlim((0, self.distance_max / self.scaling))
+        fig = plt.figure(figsize=np.multiply([3,1], 3))
+        ax = fig.add_subplot(111)
+
+        ax.plot(x / self.scaling, y)
+        plt.xlabel('Distance to target [m]')
+        plt.xlim((0, 2 * self.cross_over / self.scaling))
         plt.ylabel('Likelihood')
         plt.ylim((0, 1))
         plt.title('sensor_target')
 
         # Save picture in main folder
-        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_target.png')
+        ratio = 0.3
+        xleft, xright = ax.get_xlim()
+        ybottom, ytop = ax.get_ylim()
+        ax.set_aspect(abs((xright - xleft) / (ybottom - ytop)) * ratio)
+
+        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_target.pdf')
         plt.close()
 
 
@@ -164,7 +178,6 @@ class sensor_motion:
         self.size_world_real = size_world_real
         self.scaling = size_world[0] / size_world_real[0]
         self.step_distance = step_distance
-        self.distance_max = np.sqrt(self.size_world[0] ** 2 + self.size_world[1] ** 2)
 
         # Parameters for the likelihood function
         self.std_v = self.yaml_parameters['std_v'] * np.sqrt(self.step_distance)
@@ -240,19 +253,27 @@ class sensor_motion:
 
     def picture_save(self):
         # Displacement
-        x = np.linspace(0, 2 * self.step_distance, int(self.distance_max / self.scaling))
+        x = np.linspace(0, 2 * self.step_distance, 1000)
         y = self.gaussian(x, self.likelihood_x([0, self.step_distance]))
 
         # Plot sensor model
-        plt.plot(x / self.scaling, y * self.scaling)
-        plt.xlabel('Change in position in e_x')
+        fig = plt.figure(figsize=np.multiply([3,1], 3))
+        ax = fig.add_subplot(111)
+
+        ax.plot(x / self.scaling, y * self.scaling)
+        plt.xlabel('Change in position in e_x [m]')
         plt.xlim((0, 2 * self.step_distance / self.scaling))
         plt.ylabel('Likelihood')
         #plt.ylim((0, 1))
         plt.title('sensor_motion_displacement')
 
         # Save picture in main folder
-        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_motion_displacement.png')
+        ratio = 0.3
+        xleft, xright = ax.get_xlim()
+        ybottom, ytop = ax.get_ylim()
+        ax.set_aspect(abs((xright - xleft) / (ybottom - ytop)) * ratio)
+
+        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_motion_displacement.pdf')
         plt.close()
 
         # Approximation
@@ -262,16 +283,24 @@ class sensor_motion:
         y_a = self.gaussian(x, [0, self.std_move / np.sqrt(self.step_distance)])
 
         # Plot sensor model
-        plt.plot(x, y_0 + y_1)
-        plt.plot(x, y_a)
-        plt.xlabel('Change in position in e_x')
+        fig = plt.figure(figsize=np.multiply([3,1], 3))
+        ax = fig.add_subplot(111)
+
+        ax.plot(x, y_0 + y_1)
+        ax.plot(x, y_a)
+        plt.xlabel('Change in position in e_x [m]')
         plt.xlim((- 2, 2))
         plt.ylabel('Likelihood')
         plt.ylim((0, 1))
         plt.title('sensor_motion_approximation')
 
         # Save picture in main folder
-        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_motion_approximation.png')
+        ratio = 0.3
+        xleft, xright = ax.get_xlim()
+        ybottom, ytop = ax.get_ylim()
+        ax.set_aspect(abs((xright - xleft) / (ybottom - ytop)) * ratio)
+
+        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_motion_approximation.pdf')
         plt.close()
 
 
@@ -344,20 +373,27 @@ class sensor_distance:
 
     def picture_save(self):
         # Initalize both axis
-        x = np.linspace(0, self.distance_max, int(self.distance_max / self.scaling))
+        x = np.linspace(0, 2 * self.communication_range_neighbour, 1000)
 
         # Plot likelyhood for n different means
+        fig = plt.figure(figsize=np.multiply([3,1], 3))
+        ax = fig.add_subplot(111)
         n = 5
         for i in range(0, n):
             y = self.gaussian(x, self.likelihood(self.communication_range_neighbour * i / n))
-            plt.plot(x / self.scaling, y * self.scaling)
+            ax.plot(x / self.scaling, y * self.scaling)
 
-        plt.xlabel('Distance between robots')
-        plt.xlim((0, self.distance_max / self.scaling))
+        plt.xlabel('Distance between robots [m]')
+        plt.xlim((0, 2 * self.communication_range_neighbour / self.scaling))
         plt.ylabel('Likelihood')
         #plt.ylim((0, 1))
         plt.title('sensor_distance')
 
         # Save picture in main folder
-        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_distance.png')
+        ratio = 0.3
+        xleft, xright = ax.get_xlim()
+        ybottom, ytop = ax.get_ylim()
+        ax.set_aspect(abs((xright - xleft) / (ybottom - ytop)) * ratio)
+
+        plt.savefig(self.path + '/sensor/' + self.path + '_sensor_distance.pdf')
         plt.close()

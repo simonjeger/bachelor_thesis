@@ -1,13 +1,13 @@
 # parameter_simulation
-name_of_simulation: 'R_4rob_8dir_1pat_che_off_1'
+name_of_simulation: 'R_0'
 size_world: [50000, 50000]
 resolution: [40, 40]
 number_of_cicles: ''
 visual: 'on'
-position_initial: [[0, 0], [50000, 0], [0, 50000], [50000, 50000]]
-position_target: 'random'
+position_initial: [[0, 0], [50000, 50000]]
+position_target: [[10000, 10000], [10000, 10000], [10000, 10000]]
 max_belief: 0.99
-max_runtime: 250000
+max_runtime: 450000
 max_error: 0
 
 # parameter_robot
@@ -20,7 +20,7 @@ communication_range_neighbour: 9500
 choice_sensor_target: 'angle'
 
 # parameter_sensor_target
-cross_over: 3500
+cross_over: 3200
 width: 180
 smoothness: 6
 max_pos: 0.9

@@ -86,7 +86,7 @@ position_initial_1 = [[[0, 0]], [[7000, 0], [0, 0]], [[0, 0], [7000, 0], [14000,
 position_target_x = np.linspace(2500, 47500, 10)
 position_target_y = np.linspace(2500, 47500, 10)
 position_target = []
-n = 3
+n = 5
 for j in range(len(position_target_y)):
     for i in range(len(position_target_x)):
         position_target = position_target + [[position_target_x[i], position_target_y[j]]] * n
