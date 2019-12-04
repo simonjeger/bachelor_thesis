@@ -53,9 +53,6 @@ class simulation:
             os.makedirs(self.path + '/sensor', exist_ok=True)
             os.makedirs(self.path + '/performance', exist_ok=True)
 
-            # Remove file of performance_target_position if it already exists
-            if os.path.exists(self.path + '/performance/' + self.path + '_performance_target_position.txt'):
-                os.remove(self.path + '/performance/' + self.path + '_performance_target_position.txt')
 
     def run(self):
 
@@ -343,8 +340,11 @@ class simulation:
         plt.close(fig)
 
         # Save text
+        if os.path.exists(self.path + '/performance/' + self.path + '_performance_target_position.txt'):
+            os.remove(self.path + '/performance/' + self.path + '_performance_target_position.txt')
         f = open(self.path + '/performance/' + self.path + '_performance_target_position.txt', "a")
-        f.write(str(int(np.divide(self.position_target, self.scaling)[0])) + '\t' + str(int(np.divide(self.position_target, self.scaling)[1])) + '\t' + str(np.sum(self.performance_number_of_iteration) / self.cicle) + '\n')
+        for i in range(len(self.performance_position_target)):
+            f.write(str(int(self.performance_position_target[i][0] / self.scaling)) + '\t' + str(int(self.performance_position_target[i][1] / self.scaling)) + '\t' + str(self.performance_number_of_iteration[i]) + '\t' + str(self.performance_position_target[i][2]) + '\n')
         f.close()
 
 
@@ -385,7 +385,6 @@ class simulation:
             os.remove(self.path + '/performance/' + self.path + '_performance_time.txt')
         f = open(self.path + '/performance/' + self.path + '_performance_time.txt', "a")
         for x in self.performance_time_computation:
-            ax.scatter(x[0], x[1], color='blue')
             f.write(str(x[0]) + '\t' + str(x[1]) + '\n')
         f.close()
 

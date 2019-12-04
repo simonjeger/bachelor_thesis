@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import argparse
 import yaml
 
@@ -205,14 +206,12 @@ class belief_target_angle:
                     xdiff = xv - self.position_log_estimate[y][x][0]
                     ydiff = yv - self.position_log_estimate[y][x][1]
                     angle_abs = np.arctan2(ydiff, xdiff)
-                    angle = np.min([abs(angle_abs - measurement), abs(angle_abs - measurement - 2 * np.pi), abs(angle_abs - measurement + 2 * np.pi)])
-
+                    angle = np.minimum(np.minimum(abs(angle_abs - measurement), abs(angle_abs - measurement - 2 * np.pi)), abs(angle_abs - measurement + 2 * np.pi))
 
                     likelihood_boolean = self.my_sensor_target.likelihood(distance)
-
                     likelihood_angle = self.my_sensor_target.likelihood_angle(angle)
 
-                    likelihood = likelihood_boolean * likelihood_angle
+                    likelihood = np.minimum(likelihood_boolean * likelihood_angle)
                     likelihood = likelihood / np.sum(likelihood)
 
                 else:

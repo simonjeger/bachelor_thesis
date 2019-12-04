@@ -58,7 +58,7 @@ class sensor_target_boolean:
         plt.xlim((0, 2 * self.cross_over / self.scaling))
         plt.ylabel('Likelihood')
         plt.ylim((0, 1))
-        plt.title('sensor_target')
+        plt.title('sensor_target_detection')
 
         # Save picture in main folder
         ratio = 0.3
@@ -107,7 +107,7 @@ class sensor_target_angle:
 
         if np.random.random_sample(1) < self.likelihood(distance):
             angle_cdf = self.angle_cdf(angle, distance_cdf, distance)
-            measurement =  distance_cdf[self.find_nearest(angle_cdf, np.random.random_sample(1))]
+            measurement = distance_cdf[self.find_nearest(angle_cdf, np.random.random_sample(1))]
             return measurement
 
         else:
@@ -119,12 +119,14 @@ class sensor_target_angle:
     def likelihood_angle(self, angle_relativ):
         # std is independent of distance
         std = (self.std_angle / self.cross_over)
+        print('std: ' + str(std))
         normal_distr = 1 / np.sqrt(2 * np.pi * std ** 2) * np.exp(- np.square(angle_relativ) / (2 * std ** 2))
         return normal_distr
 
     def angle_cdf(self, angle, x, distance):
         # std gets normed by the distance
-        std = (self.std_angle / distance) * self.likelihood(self.cross_over) / self.likelihood(distance) # When far away -> random measurement
+        std = (self.std_angle / distance) * (self.likelihood(self.cross_over) / self.likelihood(distance)) ** 2 # When far away -> random measurement
+        print('std_cdf: ' + str(int(std)))
         cdf = 1 / 2 * (1 + erf((np.subtract(x, angle) / (std * np.sqrt(2)))))
         return cdf
 
@@ -135,25 +137,39 @@ class sensor_target_angle:
 
     def picture_save(self):
         # Initalize both axis
-        x = np.linspace(0, 2 * self.cross_over, 1000)
-        y = self.likelihood(x)
+        x1 = np.linspace(0, 2 * self.cross_over, 1000)
+        x2 = np.linspace(- np.pi, np.pi, 1000)
+        y1 = self.likelihood(x1)
+        y2 = self.likelihood_angle(x2)
 
         # Plot sensor model
-        fig = plt.figure(figsize=np.multiply([3,1], 3))
-        ax = fig.add_subplot(111)
+        fig = plt.figure(figsize=np.multiply([3,2.5], 3))
+        ax1 = fig.add_subplot(211)
 
-        ax.plot(x / self.scaling, y)
+        ax1.plot(x1 / self.scaling, y1)
         plt.xlabel('Distance to target [m]')
-        plt.xlim((0, 2 * self.cross_over / self.scaling))
+        plt.xlim(0, 2 * self.cross_over / self.scaling)
         plt.ylabel('Likelihood')
-        plt.ylim((0, 1))
-        plt.title('sensor_target')
+        plt.ylim(0, 1)
+        plt.title('sensor_target_detection')
+
+        ax2 = fig.add_subplot(212)
+
+        ax2.plot(x2 / self.scaling, y2)
+        plt.xlabel('Distance to target [m]')
+        plt.xlim(- np.pi, np.pi)
+        plt.ylabel('Likelihood')
+        plt.ylim(0, 1)
+        plt.title('sensor_target_bearing')
 
         # Save picture in main folder
         ratio = 0.3
-        xleft, xright = ax.get_xlim()
-        ybottom, ytop = ax.get_ylim()
-        ax.set_aspect(abs((xright - xleft) / (ybottom - ytop)) * ratio)
+        x1left, x1right = ax1.get_xlim()
+        y1bottom, y1top = ax1.get_ylim()
+        x2left, x2right = ax2.get_xlim()
+        y2bottom, y2top = ax2.get_ylim()
+        ax1.set_aspect(abs((x1right - x1left) / (y1bottom - y1top)) * ratio)
+        ax2.set_aspect(abs((x2right - x2left) / (y2bottom - y2top)) * ratio)
 
         plt.savefig(self.path + '/sensor/' + self.path + '_sensor_target.pdf')
         plt.close()
