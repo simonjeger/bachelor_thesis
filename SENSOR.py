@@ -119,14 +119,12 @@ class sensor_target_angle:
     def likelihood_angle(self, angle_relativ):
         # std is independent of distance
         std = (self.std_angle / self.cross_over)
-        print('std: ' + str(std))
         normal_distr = 1 / np.sqrt(2 * np.pi * std ** 2) * np.exp(- np.square(angle_relativ) / (2 * std ** 2))
         return normal_distr
 
     def angle_cdf(self, angle, x, distance):
         # std gets normed by the distance
         std = (self.std_angle / distance) * (self.likelihood(self.cross_over) / self.likelihood(distance)) ** 2 # When far away -> random measurement
-        print('std_cdf: ' + str(int(std)))
         cdf = 1 / 2 * (1 + erf((np.subtract(x, angle) / (std * np.sqrt(2)))))
         return cdf
 

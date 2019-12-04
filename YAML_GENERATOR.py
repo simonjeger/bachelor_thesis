@@ -84,8 +84,8 @@ def write(visual, max_runtime, position_initial, position_target, step_distance,
 
 max_runtime = [9*50000, 5*50000, 4*50000, 3*50000]
 
-#position_initial_0 = [[[0, 0]], [[0, 0], [50000, 50000]], [[0, 0], [50000, 0], [0, 50000]]]
-position_initial_0 = [[[0, 0], [50000, 50000]], [[0, 0], [50000, 0], [0, 50000]]]
+position_initial_0 = [[[0, 0]], [[0, 0], [50000, 50000]], [[0, 0], [50000, 0], [0, 50000]]]
+#position_initial_0 = [[[0, 0], [50000, 50000]], [[0, 0], [50000, 0], [0, 50000]]]
 position_initial_1 = [[[0, 0]], [[7000, 0], [0, 0]], [[0, 0], [7000, 0], [14000, 0]]]
 
 position_target_x = np.linspace(2500, 47500, 10)
@@ -97,14 +97,14 @@ for j in range(len(position_target_y)):
         position_target = position_target + [[position_target_x[i], position_target_y[j]]] * n
 
 number_of_directions_0 = [8]
-#path_depth_0 = [1, 2, 3]
-path_depth_0 = [1]
-#decision_0 = ['expensive', 'cheap']
-decision_0 = ['cheap']
+path_depth_0 = [1, 2, 3]
+#path_depth_0 = [1]
+decision_0 = ['expensive', 'cheap']
+#decision_0 = ['cheap']
 #decision_1 = ['lawnmower']
 #rise_gain_0 = ['on', 'off']
-rise_gain_0 = ['on']
-#rise_gain_0 = ['off']
+#rise_gain_0 = ['on']
+rise_gain_0 = ['off']
 diving_depth_0 = [1, 2]
 visual = 'off'
 

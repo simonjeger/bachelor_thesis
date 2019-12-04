@@ -211,7 +211,7 @@ class belief_target_angle:
                     likelihood_boolean = self.my_sensor_target.likelihood(distance)
                     likelihood_angle = self.my_sensor_target.likelihood_angle(angle)
 
-                    likelihood = np.minimum(likelihood_boolean * likelihood_angle)
+                    likelihood = likelihood_boolean * likelihood_angle
                     likelihood = likelihood / np.sum(likelihood)
 
                 else:
