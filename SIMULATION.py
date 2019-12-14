@@ -1,6 +1,8 @@
+# This is the actual simulation
+
 import numpy as np
 import matplotlib
-matplotlib.use("Agg")
+matplotlib.use("Agg") # is needed for processing on cluster
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from scipy.interpolate import griddata

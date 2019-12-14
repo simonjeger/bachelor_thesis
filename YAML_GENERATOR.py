@@ -1,3 +1,5 @@
+# This is a script that generates the .yaml files that are used by SIMULATION.py
+
 import numpy as np
 import os
 

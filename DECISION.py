@@ -42,9 +42,9 @@ class decision:
         self.diving_depth = self.yaml_parameters['diving_depth']
         if self.yaml_parameters['rise_time'] == '':
             interval = self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate']
-            diagonal = np.sqrt(self.yaml_parameters['size_world'][0] ** 2 + self.yaml_parameters['size_world'][1] ** 2) - self.yaml_parameters['cross_over'] * 1.3
-            self.rise_gain_initial = 0 - np.floor(diagonal / interval)
-
+            diagonal = np.sqrt(self.yaml_parameters['size_world'][0] ** 2 + self.yaml_parameters['size_world'][1] ** 2)
+            self.rise_gain_initial = 0 - np.ceil(diagonal / 2 / interval)
+            print(self.rise_gain_initial)
         else:
             self.rise_gain_initial = 0 - self.yaml_parameters['rise_time']
         self.rise_gain = self.rise_gain_initial

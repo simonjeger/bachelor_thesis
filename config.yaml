@@ -1,13 +1,13 @@
 # parameter_simulation
-name_of_simulation: 'R_0'
+name_of_simulation: 'R_2rob_8dir_1pat_che_on_1'
 size_world: [50000, 50000]
 resolution: [40, 40]
 number_of_cicles: ''
 visual: 'on'
 position_initial: [[0, 0], [50000, 50000]]
-position_target: [[10000, 10000], [10000, 10000], [10000, 10000]]
+position_target: [[45000, 25000], [45000, 25000]]
 max_belief: 0.99
-max_runtime: 450000
+max_runtime: 300000
 max_error: 0
 
 # parameter_robot
@@ -17,14 +17,15 @@ number_of_directions: 8
 path_depth: 1
 communication_range_observation: 5000
 communication_range_neighbour: 9500
-choice_sensor_target: 'angle'
+choice_sensor_target: 'boolean'
 
 # parameter_sensor_target
-cross_over: 3200
+cross_over: 3500
 width: 180
 smoothness: 6
 max_pos: 0.9
-max_neg: 0.1
+#max_neg: 0.1
+max_neg: 0.000001
 std_angle: 3
 
 # parameter_sensor_motion

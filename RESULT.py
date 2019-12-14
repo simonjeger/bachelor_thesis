@@ -157,7 +157,7 @@ class result:
         tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=False)
         ax[-1, 0].add_patch(tar)
 
-        ax[-1, 0].set_title('Belief of homebase about target')
+        ax[-1, 0].set_title('Belief of home base about target')
 
         # Actually generating the belief_position
         my_hb_belief_position = [0] * len(self.my_robot)
@@ -167,9 +167,10 @@ class result:
         # hb_belief_state_position
         for y in range(len(self.my_robot)):
             ax[-1, y + 1].imshow(my_hb_belief_position[y], extent=[0, self.size_world_real[0], self.size_world_real[1], 0])
-            ax[-1, y + 1].set_title('Belief of homebase about position of robot ' + str(y))
+            ax[-1, y + 1].set_title('Belief of home base about position of robot ' + str(y))
 
         plt.savefig(self.path + '/construction/' + str(self.picture_id) + '.png')
+        #plt.savefig(self.path + '/construction/' + str(self.picture_id) + '.pdf')
         plt.close()
         self.picture_id = self.picture_id + 1
 
