@@ -26,10 +26,9 @@ class sensor_target_boolean:
 
         # Parameters for the likelihood function
         self.cross_over = self.yaml_parameters['cross_over'] * self.scaling
-        self.width = self.yaml_parameters['width'] * self.scaling
-        self.smoothness = self.yaml_parameters['smoothness']
-        self.max_pos = self.yaml_parameters['max_pos']
-        self.max_neg = self.yaml_parameters['max_neg']
+        self.alpha = self.yaml_parameters['alpha']
+        self.beta = self.yaml_parameters['beta']
+        self.gamma = self.yaml_parameters['gamma']
 
 
     def sense(self, position_observe):
@@ -41,7 +40,7 @@ class sensor_target_boolean:
             return 'no_measurement'
 
     def likelihood(self, distance):
-        return self.max_pos - (self.max_pos - self.max_neg) * 1 / 2 * (1 + erf((np.multiply(1 / self.width, np.subtract(distance, self.cross_over))) / (self.smoothness * np.sqrt(2))))
+        return self.alpha - (self.alpha + self.beta - 1) / (1 + np.exp(-self.gamma*(np.subtract(distance, self.cross_over))))
 
 
     def picture_save(self):
@@ -92,11 +91,9 @@ class sensor_target_angle:
 
         # Parameters for the likelihood function
         self.cross_over = self.yaml_parameters['cross_over'] * self.scaling
-        self.width = self.yaml_parameters['width'] * self.scaling
-        self.smoothness = self.yaml_parameters['smoothness']
-        self.max_pos = self.yaml_parameters['max_pos']
-        self.max_neg = self.yaml_parameters['max_neg']
-        self.std_angle = self.yaml_parameters['std_angle']
+        self.alpha = self.yaml_parameters['alpha']
+        self.beta = self.yaml_parameters['beta']
+        self.gamma = self.yaml_parameters['gamma']
 
 
     def sense(self, position_observe):
@@ -114,7 +111,7 @@ class sensor_target_angle:
             return 'no_measurement'
 
     def likelihood(self, distance):
-        return self.max_pos - (self.max_pos - self.max_neg) * 1 / 2 * (1 + erf((np.multiply(1 / self.width, np.subtract(distance, self.cross_over))) / (self.smoothness * np.sqrt(2))))
+        return self.alpha - (self.alpha + self.beta - 1) / (1 + np.exp(-self.gamma*(np.subtract(distance, self.cross_over))))
 
     def likelihood_angle(self, angle_relativ):
         # std is independent of distance

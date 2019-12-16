@@ -44,7 +44,6 @@ class decision:
             interval = self.yaml_parameters['step_distance'] * self.yaml_parameters['deciding_rate']
             diagonal = np.sqrt(self.yaml_parameters['size_world'][0] ** 2 + self.yaml_parameters['size_world'][1] ** 2)
             self.rise_gain_initial = 0 - np.ceil(diagonal / 2 / interval)
-            print(self.rise_gain_initial)
         else:
             self.rise_gain_initial = 0 - self.yaml_parameters['rise_time']
         self.rise_gain = self.rise_gain_initial
@@ -364,7 +363,7 @@ class decision:
             # Do not surface if you've seen the target in the past n steps
             i_n = 0
             if self.yaml_parameters['rise_n'] == '':
-                n = 2 * self.yaml_parameters['deciding_rate'] * self.my_sensor_target.max_neg
+                n = 2 * self.yaml_parameters['deciding_rate'] * (1 - self.my_sensor_target.beta)
             else:
                 n = self.yaml_parameters['rise_n']
 

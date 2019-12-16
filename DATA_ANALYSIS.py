@@ -2,7 +2,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
 import os
 
 def read(f):
@@ -12,6 +11,7 @@ def read(f):
     performance_number = []
     count_line = 0
 
+    # read in line per line
     while line:
         i = 0
         for word in line.split():
@@ -29,7 +29,6 @@ def read(f):
     return [position_target_x, position_target_y, performance_number]
 
 def build_histogram(performance_number, n, bins_n, file, path, color):
-    # Plot specific stuff
     mean = []
     std = []
 

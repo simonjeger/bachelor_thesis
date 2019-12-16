@@ -9,7 +9,6 @@ os.makedirs(path, exist_ok=True)
 def write(visual, max_runtime, position_initial, position_target, step_distance, number_of_directions, path_depth, decision, rise_gain, diving_depth):
 
     name = str(len(position_initial)) + 'rob_' + str(number_of_directions) + 'dir_' + str(path_depth) + 'pat_' + str(decision[0:3]) + '_' + str(rise_gain) + '_' + str(diving_depth)
-    #bsub = 'bsub -W 24:00 -R "rusage[mem=10000]" python SIMULATION.py'
     if len(position_initial) == 1:
         bsub = 'bsub -W 50:00 -R "rusage[mem=10000]" python SIMULATION.py'
     if len(position_initial) == 2:
@@ -54,11 +53,9 @@ def write(visual, max_runtime, position_initial, position_target, step_distance,
     text = text + "" + '\n'
     text = text + "# parameter_sensor_target" + '\n'
     text = text + "cross_over: 3500" + '\n'
-    text = text + "width: 180" + '\n'
-    text = text + "smoothness: 6" + '\n'
-    text = text + "max_pos: 0.9" + '\n'
-    text = text + "max_neg: 0.1" + '\n'
-    text = text + "std_angle: 3" + '\n'
+    text = text + "alpha: 0.9" + '\n'
+    text = text + "beta: 0.9" + '\n'
+    text = text + "gamma: 1.95" + '\n'
     text = text + "" + '\n'
     text = text + "# parameter_sensor_motion" + '\n'
     text = text + "std_v: 0.001" + '\n'
@@ -110,7 +107,8 @@ rise_gain_0 = ['off']
 diving_depth_0 = [1, 2]
 visual = 'off'
 
-# 0
+
+# 0: probabilistic algorithm
 for a in position_initial_0:
     for b in number_of_directions_0:
         for c in path_depth_0:
@@ -128,6 +126,6 @@ for a in position_initial_0:
                     else:
                         write(visual, max_runtime[len(a) - 1], a, position_target, 1.5, b, c, d, 'off', 1)
 
-'''# 1
+# 1: lawnmower algorithm
 for a in position_initial_1:
-    write(visual, max_runtime[len(a)-1], a, position_target, 0.75, 4, 1, decision_1[0], 'off', 1)'''
+    write(visual, max_runtime[len(a)-1], a, position_target, 0.75, 4, 1, decision_1[0], 'off', 1)
