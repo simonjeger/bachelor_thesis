@@ -10,6 +10,7 @@ import copy
 import os
 import argparse
 import yaml
+import matplotlib.ticker as mticker
 
 import AGENT
 import RESULT
@@ -313,9 +314,11 @@ class simulation:
         # Interpolate
         zi = griddata((x, y), z, (xi, yi), method='nearest')
 
-        fig = plt.figure()
+        fig = plt.figure(figsize = (6, 6))
         ax = fig.add_subplot(111)
         im = ax.imshow(zi, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
+        self.my_result.colorbar(im)
+        self.my_result.label(ax)
 
         # Add patches
         for i in range(len(self.performance_position_target)):
@@ -332,12 +335,11 @@ class simulation:
                 ax.add_patch(tar)
 
         # Save figure
-        plt.colorbar(im)
         plt.gca().set_aspect('equal', adjustable='box')
         if len(self.my_robot) > 1:
-            ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average time: ' + str(np.round(np.sum(self.performance_number_of_iteration) / self.cicle, 2)) + 'h over ' + str(self.cicle) + ' cicles')
+            ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robots)' + '\n' + 'Average time: ' + str(np.round(np.sum(self.performance_number_of_iteration) / self.cicle, 2)) + 'h over ' + str(self.cicle) + ' cycles')
         else:
-            ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robot)' + '\n' + 'Average time: ' + str(np.round(np.sum(self.performance_number_of_iteration) / self.cicle, 2)) + 'h over ' + str(self.cicle) + ' cicles')
+            ax.set_title('Performance analysis ' + '(' + str(len(self.position_initial)) + ' robot)' + '\n' + 'Average time: ' + str(np.round(np.sum(self.performance_number_of_iteration) / self.cicle, 2)) + 'h over ' + str(self.cicle) + ' cycles')
         fig.savefig(self.path + '/performance/' + self.path + '_performance_target_position.pdf')
         plt.close(fig)
 
@@ -401,18 +403,18 @@ args = parser.parse_args()
 with open(args.yaml_file, 'rt') as fh:
     yaml_parameters = yaml.safe_load(fh)
 
-if yaml_parameters['number_of_cicles'] == '':
+if yaml_parameters['number_of_cycles'] == '':
     if yaml_parameters['position_target'] == 'random':
-        number_of_cicles = 100
+        number_of_cycles = 100
     else:
-        number_of_cicles = len(yaml_parameters['position_target'])
+        number_of_cycles = len(yaml_parameters['position_target'])
 else:
-    if yaml_parameters['number_of_cicles'] > len(yaml_parameters['position_target']):
-        print('Use smaller number_of_cicles or more position_targets')
+    if yaml_parameters['number_of_cycles'] > len(yaml_parameters['position_target']):
+        print('Use smaller number_of_cycles or more position_targets')
     else:
-        number_of_cicles = yaml_parameters['number_of_cicles']
+        number_of_cycles = yaml_parameters['number_of_cycles']
 
-for i in range(number_of_cicles):
+for i in range(number_of_cycles):
     # Run the simulation
     my_simulation.run()
 

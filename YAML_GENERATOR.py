@@ -34,7 +34,7 @@ def write(visual, max_runtime, position_initial, position_target, step_distance,
     text = text + "name_of_simulation: " + "'" + 'R_' + name + "'" + '\n'
     text = text + "size_world: [50000, 50000]" + '\n'
     text = text + "resolution: [40, 40]" + '\n'
-    text = text + "number_of_cicles: ''" + '\n'
+    text = text + "number_of_cycles: ''" + '\n'
     text = text + "visual: '" + str(visual) + "'" + '\n'
     text = text + "position_initial: " + str(position_initial) + '\n'
     text = text + "position_target: " + str(position_target) + '\n'

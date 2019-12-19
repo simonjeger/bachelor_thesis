@@ -6,6 +6,7 @@ import os
 import shutil
 import argparse
 import yaml
+import matplotlib.ticker as mticker
 
 
 class result:
@@ -78,13 +79,36 @@ class result:
         return normal_distr
 
 
+    def colorbar(self, mappable):
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+        import matplotlib.pyplot as plt
+        last_axes = plt.gca()
+        ax = mappable.axes
+        fig = ax.figure
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        cbar = fig.colorbar(mappable, cax=cax, format='%.0e')
+        plt.sca(last_axes)
+        return cbar
+
+
+    def label(self, ax):
+        ax.xaxis.set_major_formatter(mticker.FormatStrFormatter('%d m'))
+        ax.yaxis.set_major_formatter(mticker.FormatStrFormatter('%d m'))
+        for txt in ax.xaxis.get_majorticklabels():
+            txt.set_rotation(45)
+        for txt in ax.yaxis.get_majorticklabels():
+            txt.set_rotation(45)
+
+
     def picture_save(self):
         color_robot = 'red'
         color_neighbour = 'white'
         color_target = 'black'
 
         # Save picture of each step
-        fig, (ax) = plt.subplots(len(self.my_robot) + 1, len(self.my_robot) + 1, figsize = (50 / 10 * (len(self.my_robot) + 1), (50 / 10 * (len(self.my_robot) + 1))))
+        fig, (ax) = plt.subplots(len(self.my_robot) + 1, len(self.my_robot) + 1, figsize = (60 / 10 * (len(self.my_robot) + 1), (60 / 10 * (len(self.my_robot) + 1))))
+        fig.subplots_adjust(wspace=0.35)
         for x in range(len(self.my_robot)):
 
             # Actually generating the belief_position
@@ -101,9 +125,11 @@ class result:
                     my_belief_position[y] = self.build_rphi(self.my_robot[x].position_robot_estimate[x], self.my_robot[x].my_belief_position.belief_state[y])
 
             # Belief_state_target
-            ax[x, 0].imshow(self.my_robot[x].my_belief_target.belief_state, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
+            img = ax[x,0].imshow(self.my_robot[x].my_belief_target.belief_state, extent=[0,self.size_world_real[0],self.size_world_real[1],0])
+            self.colorbar(img)
+            self.label(ax[x, 0])
 
-                # Position estimate of my own position
+            # Position estimate of my own position
             pos = patches.Circle(np.divide(self.my_robot[x].position_robot_estimate[x], self.scaling), radius=self.size_point, color=color_robot, fill=True)
             ax[x, 0].add_patch(pos)
 
@@ -139,7 +165,9 @@ class result:
 
             # Belief_state_position
             for y in range(len(self.my_robot[x].position_robot_estimate)):
-                ax[x, y + 1].imshow(my_belief_position[y], extent=[0,self.size_world_real[0],self.size_world_real[1],0])
+                img = ax[x, y + 1].imshow(my_belief_position[y], extent=[0,self.size_world_real[0],self.size_world_real[1],0])
+                self.colorbar(img)
+                self.label(ax[x, y + 1])
                 nei = patches.Circle((np.divide(self.my_robot[x].position_robot_exact[y], self.scaling)), radius=self.size_point, color=color_neighbour, fill=True)
                 ax[x, y + 1].add_patch(nei)
 
@@ -152,7 +180,9 @@ class result:
                 ax[x, y + 1].set_title('Belief of robot ' + str(x) + ' about position of robot ' + str(y))
 
         # hb_belief_state_target
-        ax[-1, 0].imshow(self.my_homebase.my_belief_target.belief_state, extent=[0, self.size_world_real[0], self.size_world_real[1], 0])
+        img = ax[-1, 0].imshow(self.my_homebase.my_belief_target.belief_state, extent=[0, self.size_world_real[0], self.size_world_real[1], 0])
+        self.colorbar(img)
+        self.label(ax[-1, 0])
 
         tar = patches.Circle(np.divide(self.position_target, self.scaling), radius=self.size_point, color=color_target, fill=False)
         ax[-1, 0].add_patch(tar)
@@ -166,7 +196,9 @@ class result:
 
         # hb_belief_state_position
         for y in range(len(self.my_robot)):
-            ax[-1, y + 1].imshow(my_hb_belief_position[y], extent=[0, self.size_world_real[0], self.size_world_real[1], 0])
+            img = ax[-1, y + 1].imshow(my_hb_belief_position[y], extent=[0, self.size_world_real[0], self.size_world_real[1], 0])
+            self.colorbar(img)
+            self.label(ax[-1, y + 1])
             ax[-1, y + 1].set_title('Belief of home base about position of robot ' + str(y))
 
         plt.savefig(self.path + '/construction/' + str(self.picture_id) + '.png')

@@ -1,0 +1,49 @@
+# parameter_simulation
+name_of_simulation: 'R_1rob_8dir_1pat_exp_off_1'
+size_world: [50000, 50000]
+resolution: [250, 250]
+number_of_cycles: ''
+visual: 'on'
+position_initial: [[0, 0], [50000, 50000]]
+position_target: [[45000, 25000]]
+max_belief: 0.99
+max_runtime: 450000
+max_error: 0
+
+# parameter_robot
+deciding_rate: 1500 #steps/decision
+step_distance: 1.5
+number_of_directions: 8
+path_depth: 1
+communication_range_observation: 5000
+communication_range_neighbour: 9500
+choice_sensor_target: 'boolean'
+
+# parameter_sensor_target
+cross_over: 3500
+alpha: 0.9
+#beta: 0.9
+beta: 0.99999999
+gamma: 1.95
+std_angle: 3
+
+# parameter_sensor_motion
+std_v: 0.001
+
+# parameter_sensor_distance
+std_const: 100
+std_mean: 0.1
+
+# parameter_belief_position
+std_x: 100
+std_y: 100
+
+# parameter belief
+lower_bound: ''
+
+# parameter_decision
+decision: 'cheap'
+rise_gain: 'on'
+rise_time: ''
+rise_n: ''
+diving_depth: 1

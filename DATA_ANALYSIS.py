@@ -60,6 +60,7 @@ def build_histogram(performance_number, n, bins_n, file, path, color):
     # Adding legend
     plt.legend(loc='best')
     plt.xlabel('time till target found [s]')
+    plt.ylabel('number of simulations')
 
     # Calculating overall mean
     mean_mean = [0]*len(mean[-1])
